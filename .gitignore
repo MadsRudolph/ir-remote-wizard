@@ -6,3 +6,5 @@ dist/
 build/
 .env
 *.sqlite3
+Flipper-IRDB
+server.log

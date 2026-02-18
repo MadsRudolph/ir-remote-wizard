@@ -138,7 +138,7 @@ class DiscoveryEngine:
 
         # Filter out Power (already confirmed) and sort by category
         ordered = []
-        seen = set()
+        seen = {"Power", "Power_on"}
         for category_name, button_names in BUTTON_CATEGORIES.items():
             for target_name in button_names:
                 target_lower = target_name.lower()

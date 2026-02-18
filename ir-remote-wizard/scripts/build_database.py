@@ -46,20 +46,26 @@ from pathlib import Path
 DEVICE_TYPE_MAP = {
     "TVs": "TV",
     "ACs": "AC",
-    "Audio_Receivers": "Audio Receiver",
-    "Blu-ray_Players": "Blu-ray Player",
+    "Audio_and_Video_Receivers": "Audio Receiver",
+    "Blu-Ray": "Blu-ray Player",
     "Cable_Boxes": "Cable Box",
     "Cameras": "Camera",
+    "CD_Players": "CD Player",
     "DVD_Players": "DVD Player",
     "Fans": "Fan",
     "Fireplaces": "Fireplace",
+    "Heaters": "Heater",
     "LED_Lighting": "LED Lighting",
     "Monitors": "Monitor",
     "Projectors": "Projector",
-    "Soundbars": "Soundbar",
+    "SoundBars": "Soundbar",
+    "Speakers": "Speaker",
     "Streaming_Devices": "Streaming Device",
     "VCRs": "VCR",
 }
+
+# Directories to skip — these have non-standard structure or duplicate data
+SKIP_DIRS = {"_Converted_", "Miscellaneous"}
 
 
 def parse_ir_file(filepath: Path) -> list[dict]:
@@ -119,9 +125,9 @@ def infer_device_type(path: Path, irdb_root: Path) -> str | None:
         return None
 
     top_dir = relative.parts[0] if relative.parts else None
-    if top_dir:
-        return DEVICE_TYPE_MAP.get(top_dir, top_dir.replace("_", " "))
-    return None
+    if not top_dir or top_dir in SKIP_DIRS:
+        return None
+    return DEVICE_TYPE_MAP.get(top_dir, top_dir.replace("_", " "))
 
 
 def infer_brand(path: Path, irdb_root: Path) -> str | None:

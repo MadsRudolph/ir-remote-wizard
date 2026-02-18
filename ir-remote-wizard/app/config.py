@@ -7,9 +7,9 @@ import os
 from dataclasses import dataclass, field
 from pathlib import Path
 
-OPTIONS_PATH = "/data/options.json"
-DB_PATH = "/data/irdb.sqlite3"
-HA_CONFIG_DIR = "/homeassistant"
+OPTIONS_PATH = os.environ.get("OPTIONS_PATH", "/data/options.json")
+DB_PATH = os.environ.get("DB_PATH", "/data/irdb.sqlite3")
+HA_CONFIG_DIR = os.environ.get("HA_CONFIG_DIR", "/homeassistant")
 
 
 @dataclass
