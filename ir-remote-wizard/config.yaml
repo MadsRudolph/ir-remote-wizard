@@ -8,6 +8,7 @@ arch:
   - amd64
   - aarch64
   - armv7
+init: false
 startup: application
 boot: manual
 ingress: true
