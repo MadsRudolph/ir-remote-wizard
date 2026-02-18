@@ -71,6 +71,8 @@ class ESPHomeIRClient:
 
         def _on_log(msg) -> None:
             line = msg.message
+            if isinstance(line, bytes):
+                line = line.decode("utf-8", errors="replace")
             log_lines.append(line)
             # ESPHome logs NEC as: "Received NEC: address=0x1234, command=0x5678"
             if re.search(
