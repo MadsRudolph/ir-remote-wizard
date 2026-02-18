@@ -1,0 +1,5 @@
+#!/command/execlineb
+
+foreground {
+    /etc/s6-overlay/scripts/init-ir-wizard.sh
+}

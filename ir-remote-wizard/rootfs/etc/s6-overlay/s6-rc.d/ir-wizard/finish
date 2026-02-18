@@ -1,0 +1,7 @@
+#!/usr/bin/execlineb -S1
+# ==============================================================================
+# Take down the S6 supervision tree when the service exits
+# ==============================================================================
+
+s6-envuidgid root
+/run/s6/basedir/bin/halt

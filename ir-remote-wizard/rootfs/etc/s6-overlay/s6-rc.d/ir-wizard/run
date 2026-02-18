@@ -1,0 +1,19 @@
+#!/usr/bin/with-contenv bashio
+# ==============================================================================
+# Start the IR Remote Wizard web application
+# ==============================================================================
+
+declare ingress_port
+declare ingress_entry
+
+ingress_port=$(bashio::addon.ingress_port)
+ingress_entry=$(bashio::addon.ingress_entry)
+
+bashio::log.info "Starting IR Remote Wizard on port ${ingress_port}..."
+
+export INGRESS_PATH="${ingress_entry}"
+
+exec python3 -m uvicorn app.main:app \
+    --host 0.0.0.0 \
+    --port "${ingress_port}" \
+    --app-dir /app

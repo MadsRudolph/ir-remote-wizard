@@ -1,3 +1,4 @@
+---
 name: "IR Remote Wizard"
 version: "0.1.0"
 slug: "ir_remote_wizard"
@@ -13,7 +14,11 @@ ingress: true
 ingress_port: 8080
 panel_icon: "mdi:remote-tv"
 panel_title: "IR Wizard"
+homeassistant_api: false
+hassio_api: true
 map:
+  - type: addon_config
+    read_only: true
   - type: homeassistant_config
     read_only: false
 options:
@@ -24,3 +29,4 @@ schema:
   esp32_host: str
   esp32_port: port
   api_encryption_key: str
+image: "ghcr.io/madsrudolph/ir-remote-wizard-{arch}"

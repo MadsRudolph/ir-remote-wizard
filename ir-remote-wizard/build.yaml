@@ -1,4 +1,5 @@
+---
 build_from:
-  amd64: Dockerfile
-  aarch64: Dockerfile
-  armv7: Dockerfile
+  amd64: ghcr.io/hassio-addons/base-python:18.0.0
+  aarch64: ghcr.io/hassio-addons/base-python:18.0.0
+  armv7: ghcr.io/hassio-addons/base-python:18.0.0
