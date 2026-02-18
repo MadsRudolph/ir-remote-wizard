@@ -29,4 +29,3 @@ schema:
   esp32_host: str
   esp32_port: port
   api_encryption_key: str
-image: "ghcr.io/madsrudolph/ir-remote-wizard-{arch}"
