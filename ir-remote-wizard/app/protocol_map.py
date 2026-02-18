@@ -114,6 +114,9 @@ def convert_code(
 
     Returns None if the protocol is unsupported and no raw data is available.
     """
+    if protocol == "Pronto" and raw_data:
+        return ESPHomeIRCommand("send_ir_pronto", {"data": raw_data})
+
     if protocol == "raw" and raw_data:
         return _convert_raw(raw_data)
 

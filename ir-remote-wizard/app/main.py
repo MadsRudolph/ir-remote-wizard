@@ -13,8 +13,9 @@ from fastapi.templating import Jinja2Templates
 
 from .config import Config
 from .database import IRDatabase
-from .discovery import DiscoveryEngine, WizardPhase
+from .discovery import ConfirmedButton, DiscoveryEngine, WizardPhase, WizardSession
 from .esphome_client import ESPHomeIRClient
+from .protocol_map import convert_code
 from .yaml_generator import generate_yaml, save_yaml
 
 logging.basicConfig(level=logging.INFO)
@@ -319,4 +320,170 @@ async def save_yaml_route(
         "yaml_content": yaml_content,
         "saved": True,
         "save_path": output_path,
+    })
+
+
+# --- Learn Mode routes ---
+
+@app.post("/learn", response_class=HTMLResponse)
+async def learn_mode(request: Request, session_id: str = Form(...)):
+    """Enter learn mode — bypass database, capture codes from physical remote."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    session.device_type = session.device_type or "Device"
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+    })
+
+
+@app.post("/learn/listen", response_class=HTMLResponse)
+async def learn_listen(request: Request, session_id: str = Form(...)):
+    """Listen for an IR code from the user's remote."""
+    session = engine.get_session(session_id)
+    if not session or not ir_client:
+        return RedirectResponse(_url(request, "/"))
+
+    try:
+        await ir_client.connect()
+        result = await ir_client.listen_for_ir(timeout=5.0)
+        await ir_client.disconnect()
+    except Exception as e:
+        result = {"success": False, "error": str(e)}
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+        "capture": result,
+    })
+
+
+@app.post("/learn/test", response_class=HTMLResponse)
+async def learn_test(
+    request: Request,
+    session_id: str = Form(...),
+    protocol: str = Form(...),
+    address: str = Form(""),
+    command: str = Form(""),
+    raw_data: str = Form(""),
+    pronto: str = Form(""),
+    display: str = Form(""),
+):
+    """Send a captured code back through the ESP32 to test it."""
+    session = engine.get_session(session_id)
+    if not session or not ir_client:
+        return RedirectResponse(_url(request, "/"))
+
+    # Build the capture dict to pass back to template
+    capture = {
+        "success": True,
+        "protocol": protocol,
+        "address": address or None,
+        "command": command or None,
+        "raw_data": raw_data or None,
+        "pronto": pronto or None,
+        "display": display,
+    }
+
+    try:
+        await ir_client.connect()
+        # Try the best protocol first; fall back to Pronto
+        cmd = convert_code(protocol, address or None, command or None, raw_data or None)
+        if not cmd and pronto:
+            cmd = convert_code("Pronto", raw_data=pronto)
+        if cmd:
+            await ir_client.send_command(cmd)
+        await ir_client.disconnect()
+    except Exception as e:
+        logger.error("Learn test send failed: %s", e)
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+        "capture": capture,
+        "tested": True,
+    })
+
+
+@app.post("/learn/save", response_class=HTMLResponse)
+async def learn_save(
+    request: Request,
+    session_id: str = Form(...),
+    button_name: str = Form(...),
+    protocol: str = Form(...),
+    address: str = Form(""),
+    command: str = Form(""),
+    raw_data: str = Form(""),
+    pronto: str = Form(""),
+):
+    """Save a learned button with the user-provided name."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    # Determine what to store: use Pronto if that's the protocol or as fallback
+    save_protocol = protocol
+    save_address = address or None
+    save_command = command or None
+    save_raw = raw_data or None
+
+    # If the decoded protocol doesn't map to an ESPHome service, fall back to Pronto
+    cmd = convert_code(save_protocol, save_address, save_command, save_raw)
+    if not cmd and pronto:
+        save_protocol = "Pronto"
+        save_address = None
+        save_command = None
+        save_raw = pronto
+
+    session.confirmed_buttons.append(ConfirmedButton(
+        name=button_name.strip(),
+        protocol=save_protocol,
+        address=save_address,
+        command=save_command,
+        raw_data=save_raw,
+    ))
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+        "saved_name": button_name.strip(),
+    })
+
+
+@app.post("/learn/delete", response_class=HTMLResponse)
+async def learn_delete(
+    request: Request,
+    session_id: str = Form(...),
+    button_index: int = Form(...),
+):
+    """Remove a saved button by index."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    if 0 <= button_index < len(session.confirmed_buttons):
+        session.confirmed_buttons.pop(button_index)
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+    })
+
+
+@app.post("/learn/done", response_class=HTMLResponse)
+async def learn_done(request: Request, session_id: str = Form(...)):
+    """Finish learn mode and go to results."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    session.phase = WizardPhase.RESULTS
+    yaml_content = generate_yaml(session)
+    return _render(request, "results.html", {
+        "session_id": session_id,
+        "session": session,
+        "yaml_content": yaml_content,
     })

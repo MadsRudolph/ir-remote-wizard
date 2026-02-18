@@ -161,6 +161,209 @@ class ESPHomeIRClient:
             return False
         return await self.send_command(cmd)
 
+    async def send_pronto(self, data: str) -> bool:
+        """Send a Pronto hex code via the ESPHome send_ir_pronto service."""
+        cmd = convert_code("Pronto", raw_data=data)
+        if not cmd:
+            return False
+        return await self.send_command(cmd)
+
+    async def listen_for_ir(self, timeout: float = 5.0) -> dict:
+        """Subscribe to ESP32 logs and capture the first IR code received.
+
+        Waits up to *timeout* seconds.  When the first IR log line appears,
+        collects for an additional 500 ms so all decodings of the same button
+        press are gathered, then picks the best protocol.
+
+        Returns {success, protocol, address, command, raw_data, pronto, display}.
+        """
+        if not self._client:
+            await self.connect()
+
+        first_ir = asyncio.Event()
+        log_lines: list[str] = []
+
+        # Patterns for known protocol log lines
+        ir_pattern = re.compile(
+            r"Received (NEC|Samsung|Samsung36|Sony|RC5|RC6|LG|Pronto|Pioneer|Panasonic):",
+            re.IGNORECASE,
+        )
+
+        def _on_log(msg) -> None:
+            line = msg.message
+            if isinstance(line, bytes):
+                line = line.decode("utf-8", errors="replace")
+            log_lines.append(line)
+            if ir_pattern.search(line):
+                first_ir.set()
+
+        unsub = self._client.subscribe_logs(
+            _on_log, log_level=LogLevel.LOG_LEVEL_DEBUG
+        )
+
+        try:
+            # Wait for first IR log line
+            try:
+                await asyncio.wait_for(first_ir.wait(), timeout=timeout)
+            except asyncio.TimeoutError:
+                return {"success": False, "error": "No IR signal detected within timeout."}
+
+            # Collect for 500ms more to get all decodings of same press
+            await asyncio.sleep(0.5)
+
+            return self._parse_ir_logs(log_lines)
+        finally:
+            unsub()
+
+    # --- Protocol priority (lower = preferred) ---
+    _PROTOCOL_PRIORITY = {
+        "NEC": 1,
+        "Samsung": 2,
+        "Sony": 3,
+        "RC5": 4,
+        "RC6": 5,
+        "LG": 6,
+        "Pronto": 7,
+    }
+
+    def _parse_ir_logs(self, log_lines: list[str]) -> dict:
+        """Parse collected log lines and return the best IR code found."""
+        parsed: list[dict] = []
+
+        for line in log_lines:
+            # NEC: address=0xXXXX, command=0xXXXX
+            m = re.search(
+                r"Received NEC: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "NEC",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"NEC addr=0x{m.group(1)} cmd=0x{m.group(2)}",
+                })
+                continue
+
+            # Samsung: data=0xXXXXXXXX
+            m = re.search(
+                r"Received Samsung: data=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Samsung",
+                    "address": None,
+                    "command": None,
+                    "raw_data": m.group(1),
+                    "display": f"Samsung data=0x{m.group(1)}",
+                })
+                continue
+
+            # Sony: data=0xXXXX, nbits=XX
+            m = re.search(
+                r"Received Sony: data=0x([0-9A-Fa-f]+), nbits=(\d+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Sony",
+                    "address": None,
+                    "command": None,
+                    "raw_data": f"{m.group(1)}:{m.group(2)}",
+                    "display": f"Sony data=0x{m.group(1)} nbits={m.group(2)}",
+                })
+                continue
+
+            # RC5: address=0xXX, command=0xXX
+            m = re.search(
+                r"Received RC5: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "RC5",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"RC5 addr=0x{m.group(1)} cmd=0x{m.group(2)}",
+                })
+                continue
+
+            # RC6: address=0xXX, command=0xXX
+            m = re.search(
+                r"Received RC6: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "RC6",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"RC6 addr=0x{m.group(1)} cmd=0x{m.group(2)}",
+                })
+                continue
+
+            # LG: data=0xXXXXXXXX, nbits=XX
+            m = re.search(
+                r"Received LG: data=0x([0-9A-Fa-f]+), nbits=(\d+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "LG",
+                    "address": None,
+                    "command": None,
+                    "raw_data": f"{m.group(1)}:{m.group(2)}",
+                    "display": f"LG data=0x{m.group(1)} nbits={m.group(2)}",
+                })
+                continue
+
+            # Pronto: data= followed by hex string(s)
+            m = re.search(
+                r"Received Pronto: data=\s*(.+)",
+                line,
+            )
+            if m:
+                pronto_data = m.group(1).strip()
+                # Filter noise: Pronto with < 4 burst pairs is garbage
+                parts = pronto_data.split()
+                if len(parts) >= 8:  # minimum meaningful Pronto
+                    parsed.append({
+                        "protocol": "Pronto",
+                        "address": None,
+                        "command": None,
+                        "raw_data": pronto_data,
+                        "display": f"Pronto ({len(parts)} words)",
+                    })
+                continue
+
+        if not parsed:
+            return {"success": False, "error": "IR signal detected but could not parse protocol."}
+
+        # Pick best protocol by priority
+        parsed.sort(key=lambda p: self._PROTOCOL_PRIORITY.get(p["protocol"], 99))
+        best = parsed[0]
+
+        # Also capture the Pronto as fallback if present and best is not Pronto
+        pronto = None
+        for p in parsed:
+            if p["protocol"] == "Pronto":
+                pronto = p["raw_data"]
+                break
+
+        return {
+            "success": True,
+            "protocol": best["protocol"],
+            "address": best["address"],
+            "command": best["command"],
+            "raw_data": best["raw_data"],
+            "pronto": pronto or best.get("raw_data") if best["protocol"] == "Pronto" else pronto,
+            "display": best["display"],
+        }
+
     async def _find_service(self, service_name: str):
         """Find a service by name from the device's service list."""
         _, services = await self._client.list_entities_services()

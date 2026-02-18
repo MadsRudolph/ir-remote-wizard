@@ -58,4 +58,16 @@
     </form>
     {% endfor %}
 </div>
+
+<div class="learn-separator">
+    <span>or</span>
+</div>
+
+<div class="learn-entry">
+    <p class="learn-entry-text">Remote not in the database? Point your physical remote at the ESP32 and teach it directly.</p>
+    <form method="post" action="{{ url('/learn') }}">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <button type="submit" class="btn btn-secondary btn-wide">Learn from Remote</button>
+    </form>
+</div>
 {% endblock %}

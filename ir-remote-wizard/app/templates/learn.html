@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block subtitle %}<p class="subtitle">Learn Mode: Capture IR codes from your remote</p>{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step active">2. Learn</div>
+    <div class="step">3. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+
+{% if saved_name is defined and saved_name %}
+<div class="alert alert-success">
+    Saved "{{ saved_name }}" button.
+</div>
+{% endif %}
+
+{% if capture is defined and capture and not capture.success %}
+<div class="alert alert-error">
+    {{ capture.error }}
+</div>
+{% endif %}
+
+<div class="discovery-card">
+    {% if capture is defined and capture and capture.success %}
+    {# --- Captured code — show details + name/test/save --- #}
+    <div class="discovery-info">
+        <h2>Code Captured</h2>
+        <p class="code-info">
+            Protocol: <code>{{ capture.protocol }}</code>
+            {% if capture.address %} | Address: <code>0x{{ capture.address }}</code>{% endif %}
+            {% if capture.command %} | Command: <code>0x{{ capture.command }}</code>{% endif %}
+        </p>
+        <p class="code-info" style="margin-top: 2px;">{{ capture.display }}</p>
+    </div>
+
+    {% if tested is defined and tested %}
+    <div class="alert alert-success" style="margin-top: 12px;">
+        Code sent to ESP32 — did your device respond?
+    </div>
+    {% endif %}
+
+    <div class="learn-actions">
+        {# Test button #}
+        <form method="post" action="{{ url('/learn/test') }}" class="inline-form">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="protocol" value="{{ capture.protocol }}">
+            <input type="hidden" name="address" value="{{ capture.address or '' }}">
+            <input type="hidden" name="command" value="{{ capture.command or '' }}">
+            <input type="hidden" name="raw_data" value="{{ capture.raw_data or '' }}">
+            <input type="hidden" name="pronto" value="{{ capture.pronto or '' }}">
+            <input type="hidden" name="display" value="{{ capture.display }}">
+            <button type="submit" class="btn btn-secondary">Test</button>
+        </form>
+
+        {# Save form with name input #}
+        <form method="post" action="{{ url('/learn/save') }}" class="learn-save-form">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="protocol" value="{{ capture.protocol }}">
+            <input type="hidden" name="address" value="{{ capture.address or '' }}">
+            <input type="hidden" name="command" value="{{ capture.command or '' }}">
+            <input type="hidden" name="raw_data" value="{{ capture.raw_data or '' }}">
+            <input type="hidden" name="pronto" value="{{ capture.pronto or '' }}">
+            <div class="learn-name-row">
+                <input type="text" name="button_name" placeholder="Button name (e.g. Power)" required class="learn-name-input">
+                <button type="submit" class="btn btn-success">Save</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="learn-listen-again">
+        <form method="post" action="{{ url('/learn/listen') }}">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-primary">Listen for Another</button>
+        </form>
+    </div>
+
+    {% else %}
+    {# --- No capture yet — show instruction + Listen button --- #}
+    <div class="discovery-info">
+        <h2>Point your remote at the IR receiver</h2>
+        <p class="instruction">Press <strong>Listen</strong>, then press a button on your physical remote within 5 seconds. The ESP32 will capture the IR code.</p>
+    </div>
+
+    <div class="action-buttons">
+        <form method="post" action="{{ url('/learn/listen') }}">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-primary btn-large">Listen</button>
+        </form>
+    </div>
+    {% endif %}
+</div>
+
+{% if session.confirmed_buttons %}
+<div class="learn-saved-list">
+    <h3>Saved Buttons ({{ session.confirmed_buttons | length }})</h3>
+    <div class="learn-button-grid">
+        {% for btn in session.confirmed_buttons %}
+        <div class="learn-button-item">
+            <span class="learn-button-name">{{ btn.name }}</span>
+            <span class="learn-button-proto">{{ btn.protocol }}</span>
+            <form method="post" action="{{ url('/learn/delete') }}" class="inline-form">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="button_index" value="{{ loop.index0 }}">
+                <button type="submit" class="btn btn-danger btn-small">Remove</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div class="learn-done-section">
+        <form method="post" action="{{ url('/learn/done') }}">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-success btn-wide">Generate YAML</button>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}
