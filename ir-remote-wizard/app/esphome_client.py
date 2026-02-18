@@ -82,7 +82,7 @@ class ESPHomeIRClient:
             ):
                 received.set()
 
-        unsub = await self._client.subscribe_logs(
+        unsub = self._client.subscribe_logs(
             _on_log, log_level=LogLevel.LOG_LEVEL_DEBUG
         )
 
