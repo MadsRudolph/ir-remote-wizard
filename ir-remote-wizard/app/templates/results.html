@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block subtitle %}<p class="subtitle">Step 5: Results</p>{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step done">2. Device</div>
+    <div class="step done">3. Brand</div>
+    <div class="step done">4. Discover</div>
+    <div class="step active">5. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if saved is defined and saved %}
+<div class="alert alert-success">
+    YAML saved to <code>{{ save_path }}</code>.<br>
+    Open the <strong>ESPHome Dashboard</strong> and click <strong>Install</strong> on your IR Blaster device to flash the new config.
+</div>
+{% endif %}
+
+{% if session.confirmed_buttons %}
+<div class="results-summary">
+    <h2>Discovery Complete</h2>
+    {% if session.matched_brand %}
+    <p>Device: <strong>{{ session.matched_brand }} {{ session.device_type }}</strong></p>
+    {% endif %}
+    <p>Confirmed <strong>{{ session.confirmed_buttons | length }}</strong> working buttons:</p>
+    <div class="button-tags">
+        {% for btn in session.confirmed_buttons %}
+        <span class="tag">{{ btn.name }}</span>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="yaml-section">
+    <h3>ESPHome YAML Configuration</h3>
+    <pre class="yaml-preview"><code>{{ yaml_content }}</code></pre>
+
+    <div class="action-buttons">
+        <form method="post" action="{{ url('/save-yaml') }}">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="yaml_content" value="{{ yaml_content | e }}">
+            <button type="submit" class="btn btn-primary">Save to ESPHome</button>
+        </form>
+
+        <button class="btn btn-secondary" onclick="copyYaml()">Copy to Clipboard</button>
+    </div>
+</div>
+
+{% else %}
+<div class="results-summary">
+    <h2>No Working Codes Found</h2>
+    <p>None of the codes in the database matched your device. You can try:</p>
+    <ul>
+        <li>Selecting a different brand or "try all"</li>
+        <li>Using the IR receiver to learn codes from your existing remote</li>
+    </ul>
+    <a href="{{ url('/') }}" class="btn btn-primary">Start Over</a>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+function copyYaml() {
+    const yaml = document.querySelector('.yaml-preview code').textContent;
+    navigator.clipboard.writeText(yaml);
+}
+</script>
+{% endblock %}

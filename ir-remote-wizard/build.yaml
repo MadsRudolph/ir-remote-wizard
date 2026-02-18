@@ -1,0 +1,4 @@
+build_from:
+  amd64: Dockerfile
+  aarch64: Dockerfile
+  armv7: Dockerfile

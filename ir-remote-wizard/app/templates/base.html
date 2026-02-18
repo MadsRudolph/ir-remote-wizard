@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IR Remote Wizard</title>
+    <link rel="stylesheet" href="{{ url('/static/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>IR Remote Wizard</h1>
+            {% block subtitle %}<p class="subtitle">Auto-discover IR codes for your devices</p>{% endblock %}
+        </header>
+
+        {% block progress %}{% endblock %}
+
+        <main>
+            {% if error is defined and error %}
+            <div class="alert alert-error">{{ error }}</div>
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url('/static/wizard.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

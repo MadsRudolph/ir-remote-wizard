@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block subtitle %}<p class="subtitle">Step 3: Select the brand of your {{ device_type }}</p>{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step done">2. Device</div>
+    <div class="step active">3. Brand</div>
+    <div class="step">4. Discover</div>
+    <div class="step">5. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<form method="post" action="{{ url('/brand') }}" class="inline-form">
+    <input type="hidden" name="session_id" value="{{ session_id }}">
+    <input type="hidden" name="brand" value="_unknown">
+    <button type="submit" class="btn btn-secondary btn-wide">
+        I don't know the brand — try all
+    </button>
+</form>
+
+<div class="brand-grid">
+    {% for b in brands %}
+    <form method="post" action="{{ url('/brand') }}" class="inline-form">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <input type="hidden" name="brand" value="{{ b }}">
+        <button type="submit" class="brand-card">{{ b }}</button>
+    </form>
+    {% endfor %}
+</div>
+{% endblock %}

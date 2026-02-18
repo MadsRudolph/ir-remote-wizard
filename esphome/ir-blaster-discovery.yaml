@@ -1,0 +1,80 @@
+esphome:
+  name: ir-blaster
+  friendly_name: IR Blaster
+
+esp32:
+  board: esp32dev
+
+wifi:
+  ssid: !secret wifi_ssid
+  password: !secret wifi_password
+
+logger:
+
+api:
+  encryption:
+    key: !secret api_key
+  services:
+    - service: send_ir_nec
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_nec:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
+    - service: send_ir_samsung
+      variables:
+        data: int
+      then:
+        - remote_transmitter.transmit_samsung:
+            data: !lambda 'return data;'
+
+    - service: send_ir_sony
+      variables:
+        data: int
+        nbits: int
+      then:
+        - remote_transmitter.transmit_sony:
+            data: !lambda 'return data;'
+            nbits: !lambda 'return nbits;'
+
+    - service: send_ir_rc5
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_rc5:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
+    - service: send_ir_rc6
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_rc6:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
+    - service: send_ir_raw
+      variables:
+        code: int[]
+      then:
+        - remote_transmitter.transmit_raw:
+            carrier_frequency: 38000
+            code: !lambda 'return code;'
+
+ota:
+  platform: esphome
+
+remote_transmitter:
+  pin: GPIO4
+  carrier_duty_percent: 33%
+
+remote_receiver:
+  pin:
+    number: GPIO14
+    inverted: true
+  dump: all

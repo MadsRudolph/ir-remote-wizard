@@ -1,0 +1,26 @@
+name: "IR Remote Wizard"
+version: "0.1.0"
+slug: "ir_remote_wizard"
+description: "Auto-discover IR codes for any device using the Flipper-IRDB database"
+url: "https://github.com/MadsRudolph/ir-remote-wizard"
+arch:
+  - amd64
+  - aarch64
+  - armv7
+startup: application
+boot: manual
+ingress: true
+ingress_port: 8080
+panel_icon: "mdi:remote-tv"
+panel_title: "IR Wizard"
+map:
+  - type: homeassistant_config
+    read_only: false
+options:
+  esp32_host: ""
+  esp32_port: 6053
+  api_encryption_key: ""
+schema:
+  esp32_host: str
+  esp32_port: port
+  api_encryption_key: str

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block subtitle %}<p class="subtitle">Step 2: What type of device do you want to control?</p>{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step active">2. Device</div>
+    <div class="step">3. Brand</div>
+    <div class="step">4. Discover</div>
+    <div class="step">5. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if device_info is defined %}
+<div class="alert alert-success">
+    Connected to <strong>{{ device_info.name }}</strong> (ESPHome {{ device_info.esphome_version }})
+</div>
+{% endif %}
+
+<div class="device-grid">
+    {% for dtype, count in device_types.items() %}
+    <form method="post" action="{{ url('/device-type') }}" class="inline-form">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <input type="hidden" name="device_type" value="{{ dtype }}">
+        <button type="submit" class="device-card">
+            <span class="device-name">{{ dtype }}</span>
+            <span class="device-count">{{ count }} devices</span>
+        </button>
+    </form>
+    {% endfor %}
+</div>
+{% endblock %}
