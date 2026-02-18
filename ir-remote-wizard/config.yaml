@@ -15,6 +15,7 @@ ingress: true
 ingress_port: 8080
 panel_icon: "mdi:remote-tv"
 panel_title: "IR Wizard"
+host_network: true
 homeassistant_api: false
 hassio_api: true
 map:
