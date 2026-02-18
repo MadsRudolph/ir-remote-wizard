@@ -416,3 +416,46 @@ header h1 {
 .yaml-preview code {
     white-space: pre;
 }
+
+/* Self-check */
+.alert-warning {
+    background: #fff3e0;
+    color: #e65100;
+    border: 1px solid #ffcc80;
+}
+
+.self-check-pass {
+    font-weight: 500;
+}
+
+.self-check-warning p {
+    font-size: 13px;
+}
+
+.self-check-details {
+    margin-top: 8px;
+}
+
+.self-check-details summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: inherit;
+}
+
+.log-output {
+    background: #263238;
+    color: #eceff1;
+    padding: 12px;
+    border-radius: var(--radius);
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 8px;
+}
+
+.btn-small {
+    padding: 6px 14px;
+    font-size: 13px;
+}

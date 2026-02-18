@@ -89,7 +89,7 @@ async def connect(
         noise_psk=api_key,
     )
 
-    result = await ir_client.test_connection()
+    result = await ir_client.test_connection_and_self_check()
 
     if not result["success"]:
         return _render(request, "connect.html", {
@@ -104,6 +104,44 @@ async def connect(
         "session_id": session_id,
         "device_types": device_types,
         "device_info": result,
+        "self_check": result.get("self_check"),
+    })
+
+
+@app.post("/self-check", response_class=HTMLResponse)
+async def self_check(
+    request: Request,
+    session_id: str = Form(...),
+):
+    """Manually re-run the IR self-check."""
+    if not ir_client:
+        return _render(request, "connect.html", {
+            "session_id": session_id,
+            "config": config,
+            "error": "No ESP32 connection. Please connect first.",
+        })
+
+    try:
+        await ir_client.connect()
+        info = await ir_client._client.device_info()
+        device_info = {
+            "success": True,
+            "name": info.name,
+            "model": info.model,
+            "esphome_version": info.esphome_version,
+        }
+        check_result = await ir_client.run_self_check()
+        await ir_client.disconnect()
+    except Exception as e:
+        device_info = {"success": True, "name": "Unknown"}
+        check_result = {"success": False, "error": str(e), "log_lines": []}
+
+    device_types = db.get_device_type_counts()
+    return _render(request, "device_type.html", {
+        "session_id": session_id,
+        "device_types": device_types,
+        "device_info": device_info,
+        "self_check": check_result,
     })
 
 

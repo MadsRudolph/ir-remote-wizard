@@ -19,6 +19,33 @@
 </div>
 {% endif %}
 
+{% if self_check is defined and self_check %}
+    {% if self_check.success %}
+    <div class="alert alert-success self-check-pass">
+        IR Self-Check Passed — transmitter and receiver are working.
+    </div>
+    {% else %}
+    <div class="alert alert-warning self-check-warning">
+        <strong>IR Self-Check Failed</strong>
+        {% if self_check.error %}
+        <p style="margin-top: 4px;">{{ self_check.error }}</p>
+        {% endif %}
+        <details class="self-check-details">
+            <summary>Diagnostic logs ({{ self_check.log_lines | length }} lines)</summary>
+            <pre class="log-output">{% for line in self_check.log_lines %}{{ line }}
+{% endfor %}</pre>
+        </details>
+        <div style="margin-top: 8px;">
+            <form method="post" action="{{ url('/self-check') }}" class="inline-form">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <button type="submit" class="btn btn-secondary btn-small">Retry Self-Check</button>
+            </form>
+        </div>
+        <p class="hint" style="margin-top: 8px;">You can continue anyway — the self-check may fail if the IR LED and receiver don't face each other on this board.</p>
+    </div>
+    {% endif %}
+{% endif %}
+
 <div class="device-grid">
     {% for dtype, count in device_types.items() %}
     <form method="post" action="{{ url('/device-type') }}" class="inline-form">

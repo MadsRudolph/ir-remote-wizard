@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 
-from aioesphomeapi import APIClient, APIConnectionError
+from aioesphomeapi import APIClient, APIConnectionError, LogLevel
 
 from .protocol_map import ESPHomeIRCommand, convert_code
 
@@ -51,6 +52,81 @@ class ESPHomeIRClient:
                 "model": info.model,
                 "esphome_version": info.esphome_version,
             }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def run_self_check(self) -> dict:
+        """Send a known NEC code and check the receiver picks it up via logs.
+
+        Must be called while already connected.
+        Returns {success: bool, error: str|None, log_lines: list}.
+        """
+        if not self._client:
+            return {"success": False, "error": "Not connected", "log_lines": []}
+
+        test_address = 0x1234
+        test_command = 0x5678
+        received = asyncio.Event()
+        log_lines: list[str] = []
+
+        def _on_log(msg) -> None:
+            line = msg.message
+            log_lines.append(line)
+            # ESPHome logs NEC as: "Received NEC: address=0x1234, command=0x5678"
+            if re.search(
+                r"Received NEC: address=0x1234, command=0x5678",
+                line,
+                re.IGNORECASE,
+            ):
+                received.set()
+
+        unsub = await self._client.subscribe_logs(
+            _on_log, log_level=LogLevel.LOG_LEVEL_DEBUG
+        )
+
+        try:
+            # Send test NEC code via the send_ir_nec service
+            svc = await self._find_service("send_ir_nec")
+            await self._client.execute_service(
+                svc, {"address": test_address, "command": test_command}
+            )
+
+            # Wait up to 2 seconds for the receiver to echo it back
+            try:
+                await asyncio.wait_for(received.wait(), timeout=2.0)
+                return {"success": True, "error": None, "log_lines": log_lines}
+            except asyncio.TimeoutError:
+                return {
+                    "success": False,
+                    "error": (
+                        "IR receiver did not detect the test signal within 2 seconds. "
+                        "This may be normal if the transmitter and receiver cannot see "
+                        "each other on this board."
+                    ),
+                    "log_lines": log_lines,
+                }
+        except Exception as e:
+            return {"success": False, "error": str(e), "log_lines": log_lines}
+        finally:
+            unsub()
+
+    async def test_connection_and_self_check(self) -> dict:
+        """Connect, get device info, run self-check, then disconnect.
+
+        Returns {success, name, model, esphome_version, self_check: {...}}.
+        """
+        try:
+            await self.connect()
+            info = await self._client.device_info()
+            result = {
+                "success": True,
+                "name": info.name,
+                "model": info.model,
+                "esphome_version": info.esphome_version,
+            }
+            result["self_check"] = await self.run_self_check()
+            await self.disconnect()
+            return result
         except Exception as e:
             return {"success": False, "error": str(e)}
 
