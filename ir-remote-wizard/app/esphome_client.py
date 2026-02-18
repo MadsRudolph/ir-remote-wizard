@@ -163,7 +163,7 @@ class ESPHomeIRClient:
 
     async def _find_service(self, service_name: str):
         """Find a service by name from the device's service list."""
-        services, _ = await self._client.list_entities_services()
+        _, services = await self._client.list_entities_services()
         for service in services:
             if service.name == service_name:
                 return service
