@@ -185,12 +185,42 @@ button:
 """
 
 
+def _extract_existing_ids(content: str) -> set[str]:
+    """Extract all button IDs already present in a YAML config."""
+    return set(re.findall(r"^\s+id:\s+(btn_\w+)", content, re.MULTILINE))
+
+
+def _filter_duplicate_buttons(buttons_yaml: str, existing_ids: set[str]) -> str:
+    """Remove button entries whose IDs already exist in the config."""
+    # Split on button boundaries (lines starting with "  - platform:")
+    blocks: list[str] = []
+    current: list[str] = []
+
+    for line in buttons_yaml.splitlines():
+        if line.strip().startswith("- platform:") and current:
+            blocks.append("\n".join(current))
+            current = []
+        current.append(line)
+    if current:
+        blocks.append("\n".join(current))
+
+    kept: list[str] = []
+    for block in blocks:
+        m = re.search(r"^\s+id:\s+(btn_\w+)", block, re.MULTILINE)
+        if m and m.group(1) in existing_ids:
+            continue  # skip duplicate
+        kept.append(block)
+
+    return "\n".join(kept)
+
+
 def save_yaml(buttons_yaml: str, output_path: str) -> dict:
     """Save button definitions to the ESPHome config file.
 
     If the file already exists, appends the new buttons to it (preserving
-    all existing configuration and buttons).  If no file exists, generates
-    a complete ESPHome config using ``!secret`` references.
+    all existing configuration and buttons, skipping duplicates).
+    If no file exists, generates a complete ESPHome config using
+    ``!secret`` references.
 
     Returns ``{"merged": bool, "path": str}``.
     """
@@ -200,16 +230,21 @@ def save_yaml(buttons_yaml: str, output_path: str) -> dict:
         with open(output_path, "r") as f:
             existing = f.read()
 
+        # Skip buttons that already exist in the file
+        existing_ids = _extract_existing_ids(existing)
+        filtered = _filter_duplicate_buttons(buttons_yaml, existing_ids)
+        if not filtered.strip() or filtered.strip().startswith("#"):
+            # All buttons already exist — nothing to add
+            return {"merged": True, "path": output_path, "skipped_all": True}
+
         has_button_section = bool(
             re.search(r"^button:\s*$", existing, re.MULTILINE)
         )
 
         if has_button_section:
-            # Append new entries to the existing button section
-            new_content = existing.rstrip() + "\n\n" + buttons_yaml + "\n"
+            new_content = existing.rstrip() + "\n\n" + filtered + "\n"
         else:
-            # No button section yet — add one
-            new_content = existing.rstrip() + "\n\nbutton:\n" + buttons_yaml + "\n"
+            new_content = existing.rstrip() + "\n\nbutton:\n" + filtered + "\n"
 
         with open(output_path, "w") as f:
             f.write(new_content)
