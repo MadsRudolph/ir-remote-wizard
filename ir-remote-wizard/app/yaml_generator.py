@@ -240,14 +240,24 @@ def save_yaml(buttons_yaml: str, output_path: str) -> dict:
             existing = f.read()
         logger.info("save_yaml: existing file size=%d", len(existing))
 
+        # Treat empty files as new — write the full config template
+        if not existing.strip():
+            logger.info("save_yaml: file is empty, treating as new")
+            full_content = _FULL_CONFIG_TEMPLATE + buttons_yaml + "\n"
+            with open(output_path, "w") as f:
+                f.write(full_content)
+            logger.info("save_yaml: new file, wrote %d bytes", len(full_content))
+            return {"merged": False, "path": output_path}
+
         # Skip buttons that already exist in the file
         existing_ids = _extract_existing_ids(existing)
         filtered = _filter_duplicate_buttons(buttons_yaml, existing_ids)
         logger.info("save_yaml: existing_ids=%s, filtered length=%d",
                     existing_ids, len(filtered))
-        if not filtered.strip() or filtered.strip().startswith("#"):
-            # All buttons already exist — nothing to add
-            logger.info("save_yaml: all buttons already exist, skipping write")
+
+        # Check if any actual button entries remain after dedup
+        if "- platform:" not in filtered:
+            logger.info("save_yaml: no new buttons to add, skipping write")
             return {"merged": True, "path": output_path, "skipped_all": True}
 
         has_button_section = bool(
