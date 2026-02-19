@@ -307,15 +307,25 @@ async def skip_to_results(request: Request, session_id: str = Form(...)):
 async def save_yaml_route(
     request: Request,
     session_id: str = Form(...),
-    yaml_content: str = Form(...),
 ):
     """Save the generated YAML to the HA config directory."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    # Regenerate from session (avoids HTML form escaping issues)
+    yaml_content = generate_yaml(session)
+    logger.info("save-yaml: session %s has %d buttons, yaml length=%d",
+                session_id, len(session.confirmed_buttons), len(yaml_content))
+
     output_path = os.path.join(config.ha_config_dir, "esphome", "ir-blaster.yaml")
+    logger.info("save-yaml: writing to %s", output_path)
     result = save_yaml(yaml_content, output_path)
+    logger.info("save-yaml: result=%s", result)
 
     return _render(request, "results.html", {
         "session_id": session_id,
-        "session": engine.get_session(session_id),
+        "session": session,
         "yaml_content": yaml_content,
         "saved": True,
         "save_path": result["path"],

@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 
 from .discovery import ConfirmedButton, WizardSession
 from .protocol_map import HOLD_BUTTONS, convert_code
+
+logger = logging.getLogger(__name__)
 
 
 def generate_yaml(session: WizardSession) -> str:
@@ -224,22 +227,33 @@ def save_yaml(buttons_yaml: str, output_path: str) -> dict:
 
     Returns ``{"merged": bool, "path": str}``.
     """
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    logger.info("save_yaml called: output_path=%s, buttons_yaml length=%d",
+                output_path, len(buttons_yaml))
+    logger.info("save_yaml buttons_yaml preview: %s", buttons_yaml[:200])
 
-    if os.path.exists(output_path):
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    file_exists = os.path.exists(output_path)
+    logger.info("save_yaml: file exists=%s", file_exists)
+
+    if file_exists:
         with open(output_path, "r") as f:
             existing = f.read()
+        logger.info("save_yaml: existing file size=%d", len(existing))
 
         # Skip buttons that already exist in the file
         existing_ids = _extract_existing_ids(existing)
         filtered = _filter_duplicate_buttons(buttons_yaml, existing_ids)
+        logger.info("save_yaml: existing_ids=%s, filtered length=%d",
+                    existing_ids, len(filtered))
         if not filtered.strip() or filtered.strip().startswith("#"):
             # All buttons already exist — nothing to add
+            logger.info("save_yaml: all buttons already exist, skipping write")
             return {"merged": True, "path": output_path, "skipped_all": True}
 
         has_button_section = bool(
             re.search(r"^button:\s*$", existing, re.MULTILINE)
         )
+        logger.info("save_yaml: has_button_section=%s", has_button_section)
 
         if has_button_section:
             new_content = existing.rstrip() + "\n\n" + filtered + "\n"
@@ -248,10 +262,13 @@ def save_yaml(buttons_yaml: str, output_path: str) -> dict:
 
         with open(output_path, "w") as f:
             f.write(new_content)
+        logger.info("save_yaml: merged, wrote %d bytes", len(new_content))
         return {"merged": True, "path": output_path}
     else:
+        full_content = _FULL_CONFIG_TEMPLATE + buttons_yaml + "\n"
         with open(output_path, "w") as f:
-            f.write(_FULL_CONFIG_TEMPLATE + buttons_yaml + "\n")
+            f.write(full_content)
+        logger.info("save_yaml: new file, wrote %d bytes", len(full_content))
         return {"merged": False, "path": output_path}
 
 
