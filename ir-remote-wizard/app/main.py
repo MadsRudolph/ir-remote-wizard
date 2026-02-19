@@ -311,15 +311,15 @@ async def save_yaml_route(
 ):
     """Save the generated YAML to the HA config directory."""
     output_path = os.path.join(config.ha_config_dir, "esphome", "ir-blaster.yaml")
-    os.makedirs(os.path.dirname(output_path), exist_ok=True)
-    save_yaml(yaml_content, output_path)
+    result = save_yaml(yaml_content, output_path)
 
     return _render(request, "results.html", {
         "session_id": session_id,
         "session": engine.get_session(session_id),
         "yaml_content": yaml_content,
         "saved": True,
-        "save_path": output_path,
+        "save_path": result["path"],
+        "merged": result["merged"],
     })
 
 

@@ -15,8 +15,14 @@
 {% block content %}
 {% if saved is defined and saved %}
 <div class="alert alert-success">
-    YAML saved to <code>{{ save_path }}</code>.<br>
-    Open the <strong>ESPHome Dashboard</strong> and click <strong>Install</strong> on your IR Blaster device to flash the new config.
+    {% if merged is defined and merged %}
+    New buttons added to <code>{{ save_path }}</code>.<br>
+    Your existing configuration and buttons were preserved.
+    {% else %}
+    New config created at <code>{{ save_path }}</code>.<br>
+    Make sure <code>wifi_ssid</code>, <code>wifi_password</code>, and <code>api_key</code> are defined in your ESPHome <code>secrets.yaml</code>.
+    {% endif %}
+    <br>Open the <strong>ESPHome Dashboard</strong> and click <strong>Install</strong> on your IR Blaster device to flash the new config.
 </div>
 {% endif %}
 
@@ -35,7 +41,8 @@
 </div>
 
 <div class="yaml-section">
-    <h3>ESPHome YAML Configuration</h3>
+    <h3>New Button Definitions</h3>
+    <p>These buttons will be added to your <code>ir-blaster.yaml</code> config.</p>
     <pre class="yaml-preview"><code>{{ yaml_content }}</code></pre>
 
     <div class="action-buttons">

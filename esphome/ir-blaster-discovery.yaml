@@ -4,6 +4,8 @@ esphome:
 
 esp32:
   board: esp32dev
+  framework:
+    type: arduino
 
 wifi:
   ssid: !secret wifi_ssid
@@ -65,6 +67,13 @@ api:
         - remote_transmitter.transmit_raw:
             carrier_frequency: 38000
             code: !lambda 'return code;'
+
+    - service: send_ir_pronto
+      variables:
+        data: string
+      then:
+        - remote_transmitter.transmit_pronto:
+            data: !lambda 'return data;'
 
 ota:
   platform: esphome
