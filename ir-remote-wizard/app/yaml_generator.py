@@ -164,6 +164,7 @@ api:
 
 ota:
   - platform: esphome
+    password: !secret ota_password
 
 remote_transmitter:
   pin: GPIO4
