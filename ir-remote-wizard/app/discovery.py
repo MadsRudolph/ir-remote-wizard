@@ -34,6 +34,7 @@ class WizardSession:
     phase: WizardPhase = WizardPhase.CONNECT
     device_type: str = ""
     brand: str | None = None
+    device_name: str = ""
 
     # Phase 1 (Identify) state
     power_candidates: list[dict] = field(default_factory=list)

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+- **Fix**: Dynamic YAML Export — now saves to your specific device config file (e.g., `remote.yaml`) instead of a hardcoded generic name.
+- **UI**: Display the filename and merge status after saving YAML.
+
 ## 0.2.1
 - **Critical Fix**: Resolved `TemplateSyntaxError` (unknown tag 'endblock') that caused "Internal Server Error" on certain pages.
 - **Bug Fix**: Robust log decoding in `esphome_client.py` to prevent `TypeError` on various Python environments.

@@ -101,6 +101,12 @@ async def connect(
 
     # Connection successful — move to device type selection
     device_types = db.get_device_type_counts()
+    
+    # Store device name in session for smart file targeting
+    session = engine.get_session(session_id)
+    if session:
+        session.device_name = result.get("name", "ir-blaster")
+        
     return _render(request, "device_type.html", {
         "session_id": session_id,
         "device_types": device_types,
@@ -348,7 +354,8 @@ async def save_yaml_route(
     logger.info("save-yaml: session %s has %d buttons, yaml length=%d",
                 session_id, len(session.confirmed_buttons), len(yaml_content))
 
-    output_path = os.path.join(config.ha_config_dir, "esphome", "ir-blaster.yaml")
+    output_filename = f"{session.device_name}.yaml" if session.device_name else "ir-blaster.yaml"
+    output_path = os.path.join(config.ha_config_dir, "esphome", output_filename)
     logger.info("save-yaml: writing to %s", output_path)
     result = save_yaml(yaml_content, output_path)
     logger.info("save-yaml: result=%s", result)
