@@ -357,7 +357,7 @@ async def save_yaml_route(
     output_filename = f"{session.device_name}.yaml" if session.device_name else "ir-blaster.yaml"
     output_path = os.path.join(config.ha_config_dir, "esphome", output_filename)
     logger.info("save-yaml: writing to %s", output_path)
-    result = save_yaml(yaml_content, output_path)
+    result = save_yaml(yaml_content, output_path, device_name=session.device_name or "ir-blaster")
     logger.info("save-yaml: result=%s", result)
 
     return _render(request, "results.html", {

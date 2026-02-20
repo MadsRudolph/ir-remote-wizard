@@ -223,6 +223,7 @@ class ESPHomeIRClient:
     _PROTOCOL_PRIORITY = {
         "NEC": 1,
         "Samsung": 2,
+        "Samsung36": 2,
         "Sony": 3,
         "RC5": 4,
         "RC6": 5,
@@ -262,6 +263,21 @@ class ESPHomeIRClient:
                     "command": None,
                     "raw_data": m.group(1),
                     "display": f"Samsung data=0x{m.group(1)}",
+                })
+                continue
+
+            # Samsung36: address=0xXXXX, command=0xXXXXXXXX
+            m = re.search(
+                r"Received Samsung36: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Samsung36",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"Samsung36 addr=0x{m.group(1)} cmd=0x{m.group(2)}",
                 })
                 continue
 

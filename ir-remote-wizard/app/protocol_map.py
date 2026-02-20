@@ -55,6 +55,12 @@ def _convert_samsung32(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
     return ESPHomeIRCommand("send_ir_samsung", {"data": data})
 
 
+def _convert_samsung36(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    address = int(address_hex, 16)
+    command = int(command_hex, 16)
+    return ESPHomeIRCommand("send_ir_samsung36", {"address": address, "command": command})
+
+
 def _convert_rc5(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
     address = _hex_bytes_to_int(address_hex, 1)
     command = _hex_bytes_to_int(command_hex, 1)
@@ -92,6 +98,7 @@ PROTOCOL_CONVERTERS: dict[str, callable] = {
     "NEC42": _convert_nec,
     "NEC42ext": _convert_nec,
     "Samsung32": _convert_samsung32,
+    "Samsung36": _convert_samsung36,
     "RC5": _convert_rc5,
     "RC5X": _convert_rc5,
     "RC6": _convert_rc6,

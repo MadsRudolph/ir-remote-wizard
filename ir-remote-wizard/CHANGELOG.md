@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+- **Connectivity Fix**: Restored `web_server` to the Full Config template so you can continue to access your device directly via its IP address in the browser.
+- **Dynamic Template**: The Full Config template now uses your device's actual name and friendly name, preventing hostname conflicts when flashing.
+
 ## 0.2.2
 - **Fix**: Dynamic YAML Export — now saves to your specific device config file (e.g., `remote.yaml`) instead of a hardcoded generic name.
 - **UI**: Display the filename and merge status after saving YAML.
