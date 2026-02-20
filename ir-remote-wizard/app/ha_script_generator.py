@@ -132,31 +132,59 @@ def generate_ha_scripts(session: WizardSession) -> str:
 
 
 def generate_ha_dashboard_card(session: WizardSession) -> str:
-    """Generate a Lovelace button card snippet that calls the HA scripts."""
+    """Generate Lovelace tile cards in horizontal-stack pairs.
+
+    Matches the compact tile style used in the user's existing dashboard:
+    horizontal-stack of two tile cards per row, vertical: false.
+    """
     if not session.confirmed_buttons:
         return ""
 
     brand = _sanitize_id(session.matched_brand or "custom")
     device_type = _sanitize_id(session.device_type or "device")
 
-    lines: list[str] = []
-    lines.append("type: grid")
-    lines.append("cards:")
-
+    # Build list of tile card dicts
+    tiles: list[dict] = []
     for btn in session.confirmed_buttons:
         cmd = convert_code(btn.protocol, btn.address, btn.command, btn.raw_data)
         if not cmd:
             continue
         script_id = f"ir_{brand}_{device_type}_{_sanitize_id(btn.name)}"
         icon = _icon_for_button(btn.name)
-        lines.append(f"  - type: button")
-        lines.append(f"    name: \"{btn.name}\"")
-        lines.append(f"    icon: {icon}")
-        lines.append(f"    tap_action:")
-        lines.append(f"      action: perform-action")
-        lines.append(f"      perform_action: script.{script_id}")
+        tiles.append({"name": btn.name, "icon": icon, "entity": f"script.{script_id}"})
 
-    lines.append("columns: 3")
+    if not tiles:
+        return ""
+
+    lines: list[str] = []
+
+    # Group into pairs for horizontal-stack
+    for i in range(0, len(tiles), 2):
+        pair = tiles[i:i + 2]
+        if len(pair) == 2:
+            lines.append("- type: horizontal-stack")
+            lines.append("  cards:")
+            for tile in pair:
+                lines.append(f"    - type: tile")
+                lines.append(f"      entity: {tile['entity']}")
+                lines.append(f"      name: \"{tile['name']}\"")
+                lines.append(f"      icon: {tile['icon']}")
+                lines.append(f"      vertical: false")
+                lines.append(f"      tap_action:")
+                lines.append(f"        action: toggle")
+                lines.append(f"      features_position: bottom")
+        else:
+            # Odd button out — single tile
+            tile = pair[0]
+            lines.append(f"- type: tile")
+            lines.append(f"  entity: {tile['entity']}")
+            lines.append(f"  name: \"{tile['name']}\"")
+            lines.append(f"  icon: {tile['icon']}")
+            lines.append(f"  vertical: false")
+            lines.append(f"  tap_action:")
+            lines.append(f"    action: toggle")
+            lines.append(f"  features_position: bottom")
+
     return "\n".join(lines)
 
 
