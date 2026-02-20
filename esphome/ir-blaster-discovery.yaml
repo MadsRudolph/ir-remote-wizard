@@ -33,6 +33,15 @@ api:
         - remote_transmitter.transmit_samsung:
             data: !lambda 'return data;'
 
+    - service: send_ir_samsung36
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_samsung36:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
     - service: send_ir_sony
       variables:
         data: int
