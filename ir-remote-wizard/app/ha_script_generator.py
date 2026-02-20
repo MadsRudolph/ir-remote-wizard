@@ -59,6 +59,36 @@ _BUTTON_ICONS: dict[str, str] = {
 }
 
 
+# Icon colors by category for mushroom cards
+_CATEGORY_COLORS: dict[str, str] = {
+    "Power": "red",
+    "Volume": "teal",
+    "Channel": "blue",
+    "Navigation": "purple",
+    "Input": "indigo",
+    "Playback": "green",
+}
+
+_BUTTON_COLORS: dict[str, str] = {
+    "Power": "red",
+    "Power_on": "green",
+    "Power_off": "red",
+    "Mute": "red",
+    "Vol_up": "teal",
+    "Vol_down": "teal",
+}
+
+
+def _color_for_button(button_name: str) -> str:
+    """Pick a mushroom icon_color for a button."""
+    if button_name in _BUTTON_COLORS:
+        return _BUTTON_COLORS[button_name]
+    for category, buttons in BUTTON_CATEGORIES.items():
+        if button_name in buttons:
+            return _CATEGORY_COLORS.get(category, "blue")
+    return "blue"
+
+
 def _sanitize_id(name: str) -> str:
     """Convert a name to a valid HA script entity ID segment."""
     return re.sub(r"[^a-z0-9_]", "_", name.lower()).strip("_")
@@ -132,10 +162,10 @@ def generate_ha_scripts(session: WizardSession) -> str:
 
 
 def generate_ha_dashboard_card(session: WizardSession) -> str:
-    """Generate Lovelace tile cards in horizontal-stack pairs.
+    """Generate Mushroom template cards in horizontal-stack pairs.
 
-    Matches the compact tile style used in the user's existing dashboard:
-    horizontal-stack of two tile cards per row, vertical: false.
+    Produces a stack-in-card with mushroom-template-card buttons grouped
+    in rows of two, matching the existing IR Remote dashboard style.
     """
     if not session.confirmed_buttons:
         return ""
@@ -143,49 +173,65 @@ def generate_ha_dashboard_card(session: WizardSession) -> str:
     brand = _sanitize_id(session.matched_brand or "custom")
     device_type = _sanitize_id(session.device_type or "device")
 
-    # Build list of tile card dicts
-    tiles: list[dict] = []
+    # Build card list
+    cards: list[dict] = []
     for btn in session.confirmed_buttons:
         cmd = convert_code(btn.protocol, btn.address, btn.command, btn.raw_data)
         if not cmd:
             continue
         script_id = f"ir_{brand}_{device_type}_{_sanitize_id(btn.name)}"
-        icon = _icon_for_button(btn.name)
-        tiles.append({"name": btn.name, "icon": icon, "entity": f"script.{script_id}"})
+        cards.append({
+            "name": btn.name,
+            "icon": _icon_for_button(btn.name),
+            "color": _color_for_button(btn.name),
+            "entity": f"script.{script_id}",
+        })
 
-    if not tiles:
+    if not cards:
         return ""
 
     lines: list[str] = []
+    lines.append("type: custom:stack-in-card")
+    lines.append("mode: vertical")
+    lines.append("cards:")
 
-    # Group into pairs for horizontal-stack
-    for i in range(0, len(tiles), 2):
-        pair = tiles[i:i + 2]
+    # Group into pairs for horizontal-stack rows
+    for i in range(0, len(cards), 2):
+        pair = cards[i:i + 2]
         if len(pair) == 2:
-            lines.append("- type: horizontal-stack")
-            lines.append("  cards:")
-            for tile in pair:
-                lines.append(f"    - type: tile")
-                lines.append(f"      entity: {tile['entity']}")
-                lines.append(f"      name: \"{tile['name']}\"")
-                lines.append(f"      icon: {tile['icon']}")
-                lines.append(f"      vertical: false")
-                lines.append(f"      tap_action:")
-                lines.append(f"        action: toggle")
-                lines.append(f"      features_position: bottom")
+            lines.append("  - type: horizontal-stack")
+            lines.append("    cards:")
+            for card in pair:
+                _append_mushroom_card(lines, card, marker_indent=6)
         else:
-            # Odd button out — single tile
-            tile = pair[0]
-            lines.append(f"- type: tile")
-            lines.append(f"  entity: {tile['entity']}")
-            lines.append(f"  name: \"{tile['name']}\"")
-            lines.append(f"  icon: {tile['icon']}")
-            lines.append(f"  vertical: false")
-            lines.append(f"  tap_action:")
-            lines.append(f"    action: toggle")
-            lines.append(f"  features_position: bottom")
+            _append_mushroom_card(lines, pair[0], marker_indent=2)
 
     return "\n".join(lines)
+
+
+def _append_mushroom_card(
+    lines: list[str], card: dict, marker_indent: int
+) -> None:
+    """Append a mushroom-template-card YAML block.
+
+    marker_indent is the column where ``- `` starts.
+    Content aligns at marker_indent + 2 (after the ``- ``).
+    """
+    m = " " * marker_indent + "- "
+    p = " " * (marker_indent + 2)
+
+    lines.append(f"{m}type: custom:mushroom-template-card")
+    lines.append(f"{p}entity: {card['entity']}")
+    lines.append(f"{p}icon: {card['icon']}")
+    lines.append(f"{p}primary: \"{card['name']}\"")
+    lines.append(f"{p}secondary: \"\"")
+    lines.append(f"{p}layout: vertical")
+    lines.append(f"{p}icon_color: {card['color']}")
+    lines.append(f"{p}tap_action:")
+    lines.append(f"{p}  action: call-service")
+    lines.append(f"{p}  service: script.turn_on")
+    lines.append(f"{p}  target:")
+    lines.append(f"{p}    entity_id: {card['entity']}")
 
 
 def save_ha_scripts(
