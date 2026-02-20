@@ -54,11 +54,11 @@
             BUTTON</label>
 
         <div style="margin-bottom: 20px;">
-            <span class="chip" onclick="document.getElementById('btn_name').value='Power'">Power</span>
-            <span class="chip" onclick="document.getElementById('btn_name').value='Volume Up'">Vol +</span>
-            <span class="chip" onclick="document.getElementById('btn_name').value='Volume Down'">Vol -</span>
-            <span class="chip" onclick="document.getElementById('btn_name').value='Mute'">Mute</span>
-            <span class="chip" onclick="document.getElementById('btn_name').value='Source'">Source</span>
+            <span class="chip" onclick="quickSave('Power')">Power</span>
+            <span class="chip" onclick="quickSave('Volume Up')">Vol +</span>
+            <span class="chip" onclick="quickSave('Volume Down')">Vol -</span>
+            <span class="chip" onclick="quickSave('Mute')">Mute</span>
+            <span class="chip" onclick="quickSave('Source')">Source</span>
         </div>
 
         <form method="post" action="{{ url('/learn/save') }}" class="learn-save-form">

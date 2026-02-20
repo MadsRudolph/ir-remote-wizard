@@ -131,3 +131,13 @@ window.startBulkBlast = async function (session_id) {
         }, 3000);
     }
 };
+
+// Quick Save for chips
+window.quickSave = function (name) {
+    const input = document.getElementById('btn_name');
+    const form = document.querySelector('.learn-save-form');
+    if (input && form) {
+        input.value = name;
+        form.submit();
+    }
+};
