@@ -85,6 +85,42 @@ def _convert_sirc(address_hex: str, command_hex: str, nbits: int = 12) -> ESPHom
     return ESPHomeIRCommand("send_ir_sony", {"data": data, "nbits": nbits})
 
 
+def _convert_lg(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    """Convert LG protocol. ESPHome expects a single data word + nbits."""
+    data = _hex_bytes_to_full_int(address_hex)
+    # LG typically uses 28 or 32 bits; infer from hex length
+    hex_len = len(address_hex.strip().replace(" ", ""))
+    nbits = max(28, hex_len * 4)
+    return ESPHomeIRCommand("send_ir_lg", {"data": data, "nbits": nbits})
+
+
+def _convert_panasonic(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    address = _hex_bytes_to_int(address_hex, 2)
+    command = _hex_bytes_to_full_int(command_hex)
+    return ESPHomeIRCommand("send_ir_panasonic", {"address": address, "command": command})
+
+
+def _convert_pioneer(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    rc_code_1 = _hex_bytes_to_full_int(address_hex)
+    return ESPHomeIRCommand("send_ir_pioneer", {"rc_code_1": rc_code_1})
+
+
+def _convert_jvc(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    data = _hex_bytes_to_full_int(command_hex)
+    return ESPHomeIRCommand("send_ir_jvc", {"data": data})
+
+
+def _convert_dish(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    address = _hex_bytes_to_int(address_hex, 1)
+    command = _hex_bytes_to_int(command_hex, 1)
+    return ESPHomeIRCommand("send_ir_dish", {"address": address, "command": command})
+
+
+def _convert_coolix(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    data = _hex_bytes_to_full_int(command_hex)
+    return ESPHomeIRCommand("send_ir_coolix", {"data": data})
+
+
 def _convert_raw(raw_data: str) -> ESPHomeIRCommand:
     """Convert raw timing data (space-separated integers) to ESPHome raw command."""
     code = [int(x) for x in raw_data.strip().split()]
@@ -105,10 +141,18 @@ PROTOCOL_CONVERTERS: dict[str, callable] = {
     "SIRC": lambda a, c: _convert_sirc(a, c, 12),
     "SIRC15": lambda a, c: _convert_sirc(a, c, 15),
     "SIRC20": lambda a, c: _convert_sirc(a, c, 20),
+    "LG": _convert_lg,
+    "LG32": _convert_lg,
+    "Panasonic": _convert_panasonic,
+    "Kaseikyo": _convert_panasonic,  # Kaseikyo is Panasonic's underlying protocol
+    "Pioneer": _convert_pioneer,
+    "JVC": _convert_jvc,
+    "Dish": _convert_dish,
+    "Coolix": _convert_coolix,
 }
 
 # Protocols that must be sent as raw timing data
-RAW_ONLY_PROTOCOLS = {"Kaseikyo", "RCMM", "Pioneer"}
+RAW_ONLY_PROTOCOLS = {"RCMM"}
 
 
 def convert_code(

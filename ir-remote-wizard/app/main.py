@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import os
 import uuid
 import logging
@@ -15,6 +16,7 @@ from .config import Config
 from .database import IRDatabase
 from .discovery import ConfirmedButton, DiscoveryEngine, WizardPhase, WizardSession
 from .esphome_client import ESPHomeIRClient
+from .ha_script_generator import generate_ha_scripts, generate_ha_dashboard_card, save_ha_scripts
 from .protocol_map import convert_code
 from .yaml_generator import generate_yaml, save_yaml
 
@@ -60,6 +62,19 @@ def _render(request: Request, template: str, context: dict = None) -> HTMLRespon
     if context:
         ctx.update(context)
     return templates.TemplateResponse(template, ctx)
+
+
+def _results_context(session: WizardSession, session_id: str, **extra) -> dict:
+    """Build the standard context dict for the results page."""
+    ctx = {
+        "session_id": session_id,
+        "session": session,
+        "ha_scripts": generate_ha_scripts(session),
+        "ha_dashboard": generate_ha_dashboard_card(session),
+        "yaml_content": generate_yaml(session),
+    }
+    ctx.update(extra)
+    return ctx
 
 
 # --- Routes ---
@@ -293,12 +308,8 @@ async def confirm(
                 "brand_found": session.matched_brand,
             })
         elif session.phase == WizardPhase.RESULTS:
-            yaml_content = generate_yaml(session)
-            return _render(request, "results.html", {
-                "session_id": session_id,
-                "session": session,
-                "yaml_content": yaml_content,
-            })
+            return _render(request, "results.html",
+                           _results_context(session, session_id))
         else:
             return _render(request, "discovery.html", {
                 "session_id": session_id,
@@ -311,12 +322,8 @@ async def confirm(
         session = engine.confirm_button(session_id, did_work)
 
         if session.phase == WizardPhase.RESULTS:
-            yaml_content = generate_yaml(session)
-            return _render(request, "results.html", {
-                "session_id": session_id,
-                "session": session,
-                "yaml_content": yaml_content,
-            })
+            return _render(request, "results.html",
+                           _results_context(session, session_id))
         else:
             return _render(request, "discovery.html", {
                 "session_id": session_id,
@@ -331,12 +338,8 @@ async def confirm(
 @app.post("/skip-to-results", response_class=HTMLResponse)
 async def skip_to_results(request: Request, session_id: str = Form(...)):
     session = engine.skip_to_results(session_id)
-    yaml_content = generate_yaml(session)
-    return _render(request, "results.html", {
-        "session_id": session_id,
-        "session": session,
-        "yaml_content": yaml_content,
-    })
+    return _render(request, "results.html",
+                   _results_context(session, session_id))
 
 
 @app.post("/save-yaml", response_class=HTMLResponse)
@@ -344,30 +347,23 @@ async def save_yaml_route(
     request: Request,
     session_id: str = Form(...),
 ):
-    """Save the generated YAML to the HA config directory."""
+    """Save the generated HA scripts to scripts.yaml."""
     session = engine.get_session(session_id)
     if not session:
         return RedirectResponse(_url(request, "/"))
 
-    # Regenerate from session (avoids HTML form escaping issues)
-    yaml_content = generate_yaml(session)
-    logger.info("save-yaml: session %s has %d buttons, yaml length=%d",
-                session_id, len(session.confirmed_buttons), len(yaml_content))
+    scripts_yaml = generate_ha_scripts(session)
+    logger.info("save-yaml: session %s has %d buttons, scripts length=%d",
+                session_id, len(session.confirmed_buttons), len(scripts_yaml))
 
-    output_filename = f"{session.device_name}.yaml" if session.device_name else "ir-blaster.yaml"
-    output_path = os.path.join(config.ha_config_dir, "esphome", output_filename)
-    logger.info("save-yaml: writing to %s", output_path)
-    result = save_yaml(yaml_content, output_path, device_name=session.device_name or "ir-blaster")
+    result = save_ha_scripts(scripts_yaml, config.ha_config_dir)
     logger.info("save-yaml: result=%s", result)
 
-    return _render(request, "results.html", {
-        "session_id": session_id,
-        "session": session,
-        "yaml_content": yaml_content,
-        "saved": True,
-        "save_path": result["path"],
-        "merged": result["merged"],
-    })
+    return _render(request, "results.html",
+                   _results_context(session, session_id,
+                                    saved=True,
+                                    save_path=result["path"],
+                                    merged=result["merged"]))
 
 
 # --- Learn Mode routes ---
@@ -528,9 +524,5 @@ async def learn_done(request: Request, session_id: str = Form(...)):
         return RedirectResponse(_url(request, "/"))
 
     session.phase = WizardPhase.RESULTS
-    yaml_content = generate_yaml(session)
-    return _render(request, "results.html", {
-        "session_id": session_id,
-        "session": session,
-        "yaml_content": yaml_content,
-    })
+    return _render(request, "results.html",
+                   _results_context(session, session_id))

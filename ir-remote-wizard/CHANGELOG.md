@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.0
+- **No More Reflashing**: Results now generate Home Assistant scripts instead of ESPHome button YAML. Flash the ESP32 once with the universal firmware, then just "Reload Scripts" in HA for instant updates.
+- **HA Script Output**: New primary output format writes to `scripts.yaml` — each confirmed button becomes a callable HA script with proper icons.
+- **Dashboard Card**: Auto-generated Lovelace button card snippet that calls the new scripts.
+- **6 New Protocols**: Added native support for LG, Panasonic, Pioneer, JVC, Dish, and Coolix (no more raw-only fallback for these).
+- **Universal Firmware**: ESPHome config template now includes all protocol services out of the box.
+- **ESPHome YAML Preserved**: Still available in a collapsible section for advanced users who prefer firmware-baked buttons.
+
 ## 0.2.3
 - **Connectivity Fix**: Restored `web_server` to the Full Config template so you can continue to access your device directly via its IP address in the browser.
 - **Dynamic Template**: The Full Config template now uses your device's actual name and friendly name, preventing hostname conflicts when flashing.

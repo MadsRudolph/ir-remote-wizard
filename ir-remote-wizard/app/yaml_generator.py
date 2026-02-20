@@ -60,6 +60,27 @@ def generate_yaml(session: WizardSession) -> str:
             lines.append(f"      - remote_transmitter.transmit_rc6:")
             lines.append(f"          address: 0x{cmd.data['address']:02X}")
             lines.append(f"          command: 0x{cmd.data['command']:02X}")
+        elif cmd.service == "send_ir_lg":
+            lines.append(f"      - remote_transmitter.transmit_lg:")
+            lines.append(f"          data: 0x{cmd.data['data']:08X}")
+            lines.append(f"          nbits: {cmd.data['nbits']}")
+        elif cmd.service == "send_ir_panasonic":
+            lines.append(f"      - remote_transmitter.transmit_panasonic:")
+            lines.append(f"          address: 0x{cmd.data['address']:04X}")
+            lines.append(f"          command: 0x{cmd.data['command']:08X}")
+        elif cmd.service == "send_ir_pioneer":
+            lines.append(f"      - remote_transmitter.transmit_pioneer:")
+            lines.append(f"          rc_code_1: 0x{cmd.data['rc_code_1']:04X}")
+        elif cmd.service == "send_ir_jvc":
+            lines.append(f"      - remote_transmitter.transmit_jvc:")
+            lines.append(f"          data: 0x{cmd.data['data']:04X}")
+        elif cmd.service == "send_ir_dish":
+            lines.append(f"      - remote_transmitter.transmit_dish:")
+            lines.append(f"          address: 0x{cmd.data['address']:02X}")
+            lines.append(f"          command: 0x{cmd.data['command']:02X}")
+        elif cmd.service == "send_ir_coolix":
+            lines.append(f"      - remote_transmitter.transmit_coolix:")
+            lines.append(f"          data: 0x{cmd.data['data']:06X}")
         elif cmd.service == "send_ir_pronto":
             lines.append(f"      - remote_transmitter.transmit_pronto:")
             lines.append(f"          data: \"{cmd.data['data']}\"")
@@ -149,6 +170,54 @@ api:
         - remote_transmitter.transmit_rc6:
             address: !lambda 'return address;'
             command: !lambda 'return command;'
+
+    - service: send_ir_lg
+      variables:
+        data: int
+        nbits: int
+      then:
+        - remote_transmitter.transmit_lg:
+            data: !lambda 'return data;'
+            nbits: !lambda 'return nbits;'
+
+    - service: send_ir_panasonic
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_panasonic:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
+    - service: send_ir_pioneer
+      variables:
+        rc_code_1: int
+      then:
+        - remote_transmitter.transmit_pioneer:
+            rc_code_1: !lambda 'return rc_code_1;'
+
+    - service: send_ir_jvc
+      variables:
+        data: int
+      then:
+        - remote_transmitter.transmit_jvc:
+            data: !lambda 'return data;'
+
+    - service: send_ir_dish
+      variables:
+        address: int
+        command: int
+      then:
+        - remote_transmitter.transmit_dish:
+            address: !lambda 'return address;'
+            command: !lambda 'return command;'
+
+    - service: send_ir_coolix
+      variables:
+        data: int
+      then:
+        - remote_transmitter.transmit_coolix:
+            data: !lambda 'return data;'
 
     - service: send_ir_raw
       variables:

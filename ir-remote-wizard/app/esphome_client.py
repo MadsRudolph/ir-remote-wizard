@@ -187,7 +187,7 @@ class ESPHomeIRClient:
 
         # Patterns for known protocol log lines
         ir_pattern = re.compile(
-            r"Received (NEC|Samsung|Samsung36|Sony|RC5|RC6|LG|Pronto|Pioneer|Panasonic):",
+            r"Received (NEC|Samsung|Samsung36|Sony|RC5|RC6|LG|Pronto|Pioneer|Panasonic|JVC|Dish|Coolix):",
             re.IGNORECASE,
         )
 
@@ -228,6 +228,11 @@ class ESPHomeIRClient:
         "RC5": 4,
         "RC6": 5,
         "LG": 6,
+        "Panasonic": 6,
+        "Pioneer": 6,
+        "JVC": 6,
+        "Dish": 6,
+        "Coolix": 6,
         "Pronto": 7,
     }
 
@@ -334,10 +339,85 @@ class ESPHomeIRClient:
             if m:
                 parsed.append({
                     "protocol": "LG",
-                    "address": None,
-                    "command": None,
-                    "raw_data": f"{m.group(1)}:{m.group(2)}",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
                     "display": f"LG data=0x{m.group(1)} nbits={m.group(2)}",
+                })
+                continue
+
+            # Panasonic: address=0xXXXX, command=0xXXXXXXXX
+            m = re.search(
+                r"Received Panasonic: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Panasonic",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"Panasonic addr=0x{m.group(1)} cmd=0x{m.group(2)}",
+                })
+                continue
+
+            # Pioneer: rc_code_1=0xXXXX
+            m = re.search(
+                r"Received Pioneer: rc_code_1=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Pioneer",
+                    "address": m.group(1),
+                    "command": None,
+                    "raw_data": None,
+                    "display": f"Pioneer rc_code=0x{m.group(1)}",
+                })
+                continue
+
+            # JVC: data=0xXXXX
+            m = re.search(
+                r"Received JVC: data=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "JVC",
+                    "address": None,
+                    "command": m.group(1),
+                    "raw_data": None,
+                    "display": f"JVC data=0x{m.group(1)}",
+                })
+                continue
+
+            # Dish: address=0xXX, command=0xXX
+            m = re.search(
+                r"Received Dish: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Dish",
+                    "address": m.group(1),
+                    "command": m.group(2),
+                    "raw_data": None,
+                    "display": f"Dish addr=0x{m.group(1)} cmd=0x{m.group(2)}",
+                })
+                continue
+
+            # Coolix: data=0xXXXXXX
+            m = re.search(
+                r"Received Coolix: data=0x([0-9A-Fa-f]+)",
+                line,
+            )
+            if m:
+                parsed.append({
+                    "protocol": "Coolix",
+                    "address": None,
+                    "command": m.group(1),
+                    "raw_data": None,
+                    "display": f"Coolix data=0x{m.group(1)}",
                 })
                 continue
 
