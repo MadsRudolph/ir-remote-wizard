@@ -240,7 +240,21 @@ class ESPHomeIRClient:
         """Parse collected log lines and return the best IR code found."""
         parsed: list[dict] = []
 
-        for line in log_lines:
+        # Pre-process: join Pronto lines where data= is on one line and hex on the next
+        merged_lines: list[str] = []
+        i = 0
+        while i < len(log_lines):
+            line = log_lines[i]
+            if re.search(r"Received Pronto: data=\s*$", line):
+                # Data is on the next line — merge them
+                if i + 1 < len(log_lines):
+                    merged_lines.append(line.rstrip() + " " + log_lines[i + 1].strip())
+                    i += 2
+                    continue
+            merged_lines.append(line)
+            i += 1
+
+        for line in merged_lines:
             # NEC: address=0xXXXX, command=0xXXXX
             m = re.search(
                 r"Received NEC: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
