@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block subtitle %}<p class="subtitle">Step 5: Results</p>{% endblock %}
+{% block subtitle %}<p class="subtitle">Step 5: Your configuration is ready!</p>{% endblock %}
 
 {% block progress %}
 <div class="progress-bar">
@@ -13,66 +13,71 @@
 {% endblock %}
 
 {% block content %}
-{% if saved is defined and saved %}
-<div class="alert alert-success">
-    {% if merged is defined and merged %}
-    New buttons added to <code>{{ save_path }}</code>.<br>
-    Your existing configuration and buttons were preserved.
-    {% else %}
-    New config created at <code>{{ save_path }}</code>.<br>
-    Make sure <code>wifi_ssid</code>, <code>wifi_password</code>, and <code>api_key</code> are defined in your ESPHome <code>secrets.yaml</code>.
-    {% endif %}
-    <br>Open the <strong>ESPHome Dashboard</strong> and click <strong>Install</strong> on your IR Blaster device to flash the new config.
-</div>
-{% endif %}
+<div class="glass-card">
+    {% if session.confirmed_buttons %}
+    <h2 style="font-size: 24px; margin-bottom: 8px;">Success!</h2>
+    <p class="subtitle" style="margin-bottom: 32px;">We've generated the ESPHome configuration for your {{
+        session.device_type or 'device' }}.</p>
 
-{% if session.confirmed_buttons %}
-<div class="results-summary">
-    <h2>Discovery Complete</h2>
-    {% if session.matched_brand %}
-    <p>Device: <strong>{{ session.matched_brand }} {{ session.device_type }}</strong></p>
-    {% endif %}
-    <p>Confirmed <strong>{{ session.confirmed_buttons | length }}</strong> working buttons:</p>
-    <div class="button-tags">
-        {% for btn in session.confirmed_buttons %}
-        <span class="tag">{{ btn.name }}</span>
-        {% endfor %}
+    <div class="yaml-section">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+            <label
+                style="color: var(--text-secondary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">ESPHome
+                YAML</label>
+            <button id="copy-yaml" class="btn btn-secondary btn-small">Copy Code</button>
+        </div>
+        <div class="yaml-preview">
+            <pre
+                style="margin: 0;"><code style="font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.5;">{{ yaml_content }}</code></pre>
+        </div>
     </div>
-</div>
 
-<div class="yaml-section">
-    <h3>New Button Definitions</h3>
-    <p>These buttons will be added to your <code>ir-blaster.yaml</code> config.</p>
-    <pre class="yaml-preview"><code>{{ yaml_content }}</code></pre>
+    <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--glass-border);">
+        <h3 style="font-size: 18px; margin-bottom: 12px;">Next Steps</h3>
+        <ol style="color: var(--text-secondary); padding-left: 20px; line-height: 2;">
+            <li>Copy the YAML above into your ESPHome configuration file.</li>
+            <li>Install the updated firmware on your ESP32.</li>
+            <li>Use the <code>remote.send_command</code> service in Home Assistant.</li>
+        </ol>
+    </div>
 
-    <div class="action-buttons">
-        <form method="post" action="{{ url('/save-yaml') }}">
+    <div class="action-buttons" style="margin-top: 40px; display: flex; gap: 16px;">
+        <form method="post" action="{{ url('/save-yaml') }}" style="flex: 1;">
             <input type="hidden" name="session_id" value="{{ session_id }}">
-            <button type="submit" class="btn btn-primary">Save to ESPHome</button>
+            <button type="submit" class="btn btn-primary btn-wide btn-large">Save to ESPHome</button>
         </form>
-
-        <button class="btn btn-secondary" onclick="copyYaml()">Copy to Clipboard</button>
+        <a href="{{ url('/') }}" class="btn btn-secondary btn-wide btn-large">Start Over</a>
     </div>
-</div>
 
-{% else %}
-<div class="results-summary">
-    <h2>No Working Codes Found</h2>
-    <p>None of the codes in the database matched your device. You can try:</p>
-    <ul>
-        <li>Selecting a different brand or "try all"</li>
-        <li>Using the IR receiver to learn codes from your existing remote</li>
-    </ul>
-    <a href="{{ url('/') }}" class="btn btn-primary">Start Over</a>
-</div>
-{% endif %}
-{% endblock %}
+    <div class="glass-card"
+        style="margin-top: 32px; background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2); padding: 24px;">
+        <h3 style="font-size: 18px; margin-bottom: 16px; color: var(--primary);">Home Assistant Dashboard Preview</h3>
+        <p class="subtitle" style="font-size: 14px; margin-bottom: 20px;">Use this snippet in a <strong>Manual
+                Card</strong> for quick control:</p>
+        <div class="yaml-preview" style="background: rgba(0,0,0,0.3);">
+            <pre><code style="font-size: 12px; color: #a5b4fc;">type: grid
+cards:
+{% for btn in session.confirmed_buttons %}
+  - type: button
+    name: {{ btn.name }}
+    tap_action:
+      action: call-service
+      service: remote.send_command
+      target:
+        entity_id: remote.ir_blaster
+      data:
+        command: {{ btn.name }}
+{% endfor %}
+columns: 3</code></pre>
+        </div>
+    </div>
 
-{% block scripts %}
-<script>
-function copyYaml() {
-    const yaml = document.querySelector('.yaml-preview code').textContent;
-    navigator.clipboard.writeText(yaml);
-}
-</script>
+    {% else %}
+    <div style="text-align: center; padding: 40px 0;">
+        <h2 style="font-size: 24px; margin-bottom: 16px;">No Working Codes Found</h2>
+        <p class="subtitle" style="margin-bottom: 32px;">We couldn't find any working IR codes for this device.</p>
+        <a href="{{ url('/') }}" class="btn btn-primary btn-large">Try Again or Use Learn Mode</a>
+    </div>
+    {% endif %}
+</div>
 {% endblock %}

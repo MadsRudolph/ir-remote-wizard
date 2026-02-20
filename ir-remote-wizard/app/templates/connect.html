@@ -1,43 +1,36 @@
 {% extends "base.html" %}
 
-{% block subtitle %}<p class="subtitle">Step 1: Connect to your ESP32 IR Blaster</p>{% endblock %}
-
-{% block progress %}
-<div class="progress-bar">
-    <div class="step active">1. Connect</div>
-    <div class="step">2. Device</div>
-    <div class="step">3. Brand</div>
-    <div class="step">4. Discover</div>
-    <div class="step">5. Results</div>
-</div>
-{% endblock %}
-
 {% block content %}
-<form method="post" action="{{ url('/connect') }}">
-    <input type="hidden" name="session_id" value="{{ session_id }}">
+<div class="glass-card">
+    <h2 style="font-size: 24px; margin-bottom: 8px;">Connect to ESPHome</h2>
+    <p class="subtitle" style="margin-bottom: 32px;">Enter your ESP32 IR Blaster details to begin.</p>
 
-    <div class="form-group">
-        <label for="esp32_host">ESP32 IP Address / Hostname</label>
-        <input type="text" id="esp32_host" name="esp32_host"
-               value="{{ config.esp32_host }}"
-               placeholder="e.g., 192.168.1.100 or ir-blaster.local"
-               required>
-    </div>
+    <form method="post" action="{{ url('/connect') }}">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
 
-    <div class="form-group">
-        <label for="esp32_port">API Port</label>
-        <input type="number" id="esp32_port" name="esp32_port"
-               value="{{ config.esp32_port }}" min="1" max="65535">
-    </div>
+        <div class="form-group">
+            <label for="esp32_host">ESP32 IP Address / Hostname</label>
+            <input type="text" id="esp32_host" name="esp32_host" value="{{ config.esp32_host }}"
+                placeholder="e.g., 192.168.1.100 or ir-blaster.local" required>
+        </div>
 
-    <div class="form-group">
-        <label for="api_key">API Encryption Key</label>
-        <input type="text" id="api_key" name="api_key"
-               value="{{ config.api_encryption_key }}"
-               placeholder="Base64 encryption key from your ESPHome config">
-        <span class="hint">Leave empty if no encryption is configured</span>
-    </div>
+        <div class="form-group">
+            <label for="esp32_port">API Port</label>
+            <input type="number" id="esp32_port" name="esp32_port" value="{{ config.esp32_port }}" min="1" max="65535">
+        </div>
 
-    <button type="submit" class="btn btn-primary">Test Connection</button>
-</form>
+        <div class="form-group">
+            <label for="api_key">API Encryption Key</label>
+            <input type="password" id="api_key" name="api_key" value="{{ config.api_encryption_key }}"
+                placeholder="Base64 encryption key from your ESPHome config">
+            <span class="hint"
+                style="color: var(--text-secondary); font-size: 12px; margin-top: 8px; display: block;">Leave empty if
+                no encryption is configured</span>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-wide btn-large">
+            Connect & Self-Check
+        </button>
+    </form>
+</div>
 {% endblock %}

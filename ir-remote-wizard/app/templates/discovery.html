@@ -2,7 +2,7 @@
 
 {% block subtitle %}
 {% if phase == "identify" %}
-<p class="subtitle">Step 4: Finding the right power code</p>
+<p class="subtitle">Step 4: Finding the power code</p>
 {% else %}
 <p class="subtitle">Step 4: Testing buttons</p>
 {% endif %}
@@ -21,120 +21,99 @@
 {% block content %}
 {% if brand_found is defined and brand_found %}
 <div class="alert alert-success">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"></path>
+    </svg>
     Match found! Brand: <strong>{{ brand_found }}</strong>.
-    Now testing individual buttons...
 </div>
 {% endif %}
 
-{% if phase == "identify" %}
-    <div class="discovery-card">
-        <div class="discovery-info">
-            <h2>Power Code Test</h2>
-            <p class="progress-text">
-                Testing {{ session.identify_progress[0] }} of {{ session.identify_progress[1] }} unique codes
-            </p>
-            {% if candidate %}
-            <p class="code-info">
-                Protocol: <code>{{ candidate.protocol }}</code>
-                {% if candidate.brands %}
-                — Brands: {{ candidate.brands | join(", ") }}
+<div class="glass-card">
+    <div class="discovery-info">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 style="font-size: 24px;">
+                {% if phase == "identify" %}Power Code Test{% else %}Button: {{ candidate.button_name }}{% endif %}
+            </h2>
+            <span class="badge">
+                {% if phase == "identify" %}
+                {{ session.identify_progress[0] }} / {{ session.identify_progress[1] }}
+                {% else %}
+                {{ session.button_progress[0] }} / {{ session.button_progress[1] }}
                 {% endif %}
-            </p>
-            {% endif %}
+            </span>
         </div>
 
-        <p class="instruction">Point the IR blaster at your device and press <strong>Send</strong>.
-           Watch if the device reacts (turns on/off).</p>
+        <p class="code-info" style="margin-bottom: 16px;">
+            Protocol: <code>{{ candidate.protocol }}</code>
+            {% if candidate.brands %} — Brands: {{ candidate.brands | join(", ") }}{% endif %}
+        </p>
 
-        <div class="action-buttons">
-            <form method="post" action="{{ url('/send-test') }}" class="inline-form">
-                <input type="hidden" name="session_id" value="{{ session_id }}">
-                <button type="submit" class="btn btn-primary btn-large">
-                    {% if sent is defined and sent %}Send Again{% else %}Send{% endif %}
-                </button>
-            </form>
+        <div class="pulse-container">
+            <div class="pulse-wave"></div>
         </div>
+    </div>
 
-        {% if sent is defined and sent %}
-        <div class="confirm-section">
-            <p><strong>Did the device respond?</strong></p>
-            <div class="confirm-buttons">
-                <form method="post" action="{{ url('/confirm') }}" class="inline-form">
-                    <input type="hidden" name="session_id" value="{{ session_id }}">
-                    <input type="hidden" name="worked" value="yes">
-                    <button type="submit" class="btn btn-success">Yes, it worked!</button>
-                </form>
-                <form method="post" action="{{ url('/confirm') }}" class="inline-form">
-                    <input type="hidden" name="session_id" value="{{ session_id }}">
-                    <input type="hidden" name="worked" value="no">
-                    <button type="submit" class="btn btn-danger">No response</button>
-                </form>
-            </div>
-        </div>
+    <p style="text-align: center; margin-bottom: 24px; color: var(--text-secondary);">
+        Point the blaster at your device and press <strong>Send</strong>.
+    </p>
+
+    <div class="action-buttons" style="flex-direction: column; gap: 16px;">
+        <form method="post" action="{{ url('/send-test') }}" class="btn-wide">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-primary btn-large btn-wide">
+                {% if sent is defined and sent %}Send Again{% else %}Send Signal{% endif %}
+            </button>
+        </form>
+
+        {% if phase == "identify" and session.identify_progress[1] > 1 %}
+        <button id="bulk-blast-btn" class="btn btn-secondary btn-wide" onclick="startBulkBlast('{{ session_id }}')">
+            Bulk Blast (Try All)
+        </button>
+        <p id="bulk-status" class="hint" style="text-align: center; opacity: 0.7;"></p>
         {% endif %}
     </div>
 
-{% elif phase == "map_buttons" %}
-    <div class="discovery-card">
-        <div class="discovery-info">
-            <h2>Button: {{ candidate.button_name }}</h2>
-            <p class="progress-text">
-                Testing {{ session.button_progress[0] }} of {{ session.button_progress[1] }} buttons
-            </p>
-            {% if candidate.category is defined %}
-            <span class="badge">{{ candidate.category }}</span>
-            {% endif %}
-            <p class="code-info">Protocol: <code>{{ candidate.protocol }}</code></p>
-        </div>
-
-        <p class="instruction">Press <strong>Send</strong> and check if the
-            <strong>{{ candidate.button_name }}</strong> function works on your device.</p>
-
-        <div class="action-buttons">
-            <form method="post" action="{{ url('/send-test') }}" class="inline-form">
+    {% if sent is defined and sent %}
+    <div class="confirm-section"
+        style="margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--glass-border); animation: fadeInUp 0.4s ease-out;">
+        <p style="font-weight: 500; margin-bottom: 16px;">Did the device respond?</p>
+        <div class="confirm-buttons">
+            <form method="post" action="{{ url('/confirm') }}" class="inline-form" style="flex: 1;">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
-                <button type="submit" class="btn btn-primary btn-large">
-                    {% if sent is defined and sent %}Send Again{% else %}Send{% endif %}
-                </button>
+                <input type="hidden" name="worked" value="yes">
+                <button type="submit" class="btn btn-success btn-wide">Yes, It Worked!</button>
+            </form>
+            <form method="post" action="{{ url('/confirm') }}" class="inline-form" style="flex: 1;">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="worked" value="no">
+                <button type="submit" class="btn btn-danger btn-wide">No Response</button>
             </form>
         </div>
-
-        {% if sent is defined and sent %}
-        <div class="confirm-section">
-            <p><strong>Did "{{ candidate.button_name }}" work?</strong></p>
-            <div class="confirm-buttons">
-                <form method="post" action="{{ url('/confirm') }}" class="inline-form">
-                    <input type="hidden" name="session_id" value="{{ session_id }}">
-                    <input type="hidden" name="worked" value="yes">
-                    <button type="submit" class="btn btn-success">Yes</button>
-                </form>
-                <form method="post" action="{{ url('/confirm') }}" class="inline-form">
-                    <input type="hidden" name="session_id" value="{{ session_id }}">
-                    <input type="hidden" name="worked" value="no">
-                    <button type="submit" class="btn btn-danger">No</button>
-                </form>
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="skip-section">
-            <p>Already found all the buttons you need?</p>
-            <form method="post" action="{{ url('/skip-to-results') }}" class="inline-form">
-                <input type="hidden" name="session_id" value="{{ session_id }}">
-                <button type="submit" class="btn btn-secondary">Skip to Results</button>
-            </form>
-        </div>
-
-        {% if session.confirmed_buttons %}
-        <div class="confirmed-list">
-            <h3>Confirmed buttons ({{ session.confirmed_buttons | length }})</h3>
-            <ul>
-                {% for btn in session.confirmed_buttons %}
-                <li>{{ btn.name }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-        {% endif %}
     </div>
-{% endif %}
+    {% endif %}
+
+    {% if phase == "map_buttons" %}
+    <div class="skip-section" style="margin-top: 32px;">
+        <form method="post" action="{{ url('/skip-to-results') }}" class="inline-form">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-secondary btn-small">Finished Mapping Buttons</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if session.confirmed_buttons %}
+    <div class="confirmed-list" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--glass-border);">
+        <h3 style="font-size: 14px; margin-bottom: 12px; color: var(--text-secondary);">MAPPED BUTTONS</h3>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for btn in session.confirmed_buttons %}
+            <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">{{ btn.name
+                }}</span>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block subtitle %}<p class="subtitle">Step 3: Select the brand of your {{ device_type }}</p>{% endblock %}
+{% block subtitle %}<p class="subtitle">Step 3: Which brand is your {{ device_type }}?</p>{% endblock %}
 
 {% block progress %}
 <div class="progress-bar">
@@ -13,21 +13,25 @@
 {% endblock %}
 
 {% block content %}
-<form method="post" action="{{ url('/brand') }}" class="inline-form">
-    <input type="hidden" name="session_id" value="{{ session_id }}">
-    <input type="hidden" name="brand" value="_unknown">
-    <button type="submit" class="btn btn-secondary btn-wide">
-        I don't know the brand — try all
-    </button>
-</form>
+<div class="glass-card">
+    <h2 style="font-size: 20px; margin-bottom: 24px;">Select Brand</h2>
 
-<div class="brand-grid">
-    {% for b in brands %}
-    <form method="post" action="{{ url('/brand') }}" class="inline-form">
+    <form method="post" action="{{ url('/brand') }}" style="margin-bottom: 24px;">
         <input type="hidden" name="session_id" value="{{ session_id }}">
-        <input type="hidden" name="brand" value="{{ b }}">
-        <button type="submit" class="brand-card">{{ b }}</button>
+        <input type="hidden" name="brand" value="_unknown">
+        <button type="submit" class="btn btn-secondary btn-wide">
+            I don't know the brand — try all
+        </button>
     </form>
-    {% endfor %}
+
+    <div class="brand-grid">
+        {% for b in brands %}
+        <form method="post" action="{{ url('/brand') }}" style="display: contents;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="brand" value="{{ b }}">
+            <button type="submit" class="brand-card">{{ b }}</button>
+        </form>
+        {% endfor %}
+    </div>
 </div>
 {% endblock %}

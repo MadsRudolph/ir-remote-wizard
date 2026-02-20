@@ -232,6 +232,36 @@ async def send_test(
     return RedirectResponse(_url(request, "/"))
 
 
+@app.post("/bulk-blast", response_class=HTMLResponse)
+async def bulk_blast(
+    request: Request,
+    session_id: str = Form(...),
+):
+    """Send all candidate power codes sequentially for quick discovery."""
+    session = engine.get_session(session_id)
+    if not session or not ir_client:
+        return HTMLResponse("Session or client not found", status_code=404)
+
+    try:
+        await ir_client.connect()
+        candidates = session.power_candidates
+        for i, candidate in enumerate(candidates):
+            # Update UI would be nice, but for now we just blast them
+            # Higher level discovery logic might be needed for real async feedback
+            await ir_client.send_ir_code(
+                candidate["protocol"],
+                candidate.get("address"),
+                candidate.get("command"),
+                candidate.get("raw_data"),
+            )
+            await asyncio.sleep(0.8) # Wait for device to react/processing
+        await ir_client.disconnect()
+        return HTMLResponse("Pulse sequence complete.")
+    except Exception as e:
+        logger.error("Bulk blast failed: %s", e)
+        return HTMLResponse(f"Blast failed: {str(e)}", status_code=500)
+
+
 @app.post("/confirm", response_class=HTMLResponse)
 async def confirm(
     request: Request,

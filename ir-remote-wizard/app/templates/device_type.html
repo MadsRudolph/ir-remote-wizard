@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block subtitle %}<p class="subtitle">Step 2: What type of device do you want to control?</p>{% endblock %}
+{% block subtitle %}<p class="subtitle">Step 2: What are we controlling?</p>{% endblock %}
 
 {% block progress %}
 <div class="progress-bar">
@@ -13,61 +13,65 @@
 {% endblock %}
 
 {% block content %}
-{% if device_info is defined %}
-<div class="alert alert-success">
-    Connected to <strong>{{ device_info.name }}</strong> (ESPHome {{ device_info.esphome_version }})
-</div>
-{% endif %}
-
-{% if self_check is defined and self_check %}
-    {% if self_check.success %}
-    <div class="alert alert-success self-check-pass">
-        IR Self-Check Passed — transmitter and receiver are working.
-    </div>
-    {% else %}
-    <div class="alert alert-warning self-check-warning">
-        <strong>IR Self-Check Failed</strong>
-        {% if self_check.error %}
-        <p style="margin-top: 4px;">{{ self_check.error }}</p>
-        {% endif %}
-        <details class="self-check-details">
-            <summary>Diagnostic logs ({{ self_check.log_lines | length }} lines)</summary>
-            <pre class="log-output">{% for line in self_check.log_lines %}{{ line }}
-{% endfor %}</pre>
-        </details>
-        <div style="margin-top: 8px;">
-            <form method="post" action="{{ url('/self-check') }}" class="inline-form">
-                <input type="hidden" name="session_id" value="{{ session_id }}">
-                <button type="submit" class="btn btn-secondary btn-small">Retry Self-Check</button>
-            </form>
+<div class="glass-card" style="margin-bottom: 32px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h2 style="font-size: 20px; margin-bottom: 4px;">Connected to {{ device_info.name }}</h2>
+            <p class="subtitle" style="font-size: 14px;">{{ device_info.model }} — ESPHome {{
+                device_info.esphome_version }}</p>
         </div>
-        <p class="hint" style="margin-top: 8px;">You can continue anyway — the self-check may fail if the IR LED and receiver don't face each other on this board.</p>
+        <form method="post" action="{{ url('/self-check') }}" class="inline-form">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-secondary btn-small">Re-run Self-Check</button>
+        </form>
+    </div>
+
+    {% if self_check %}
+    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--glass-border);">
+        {% if self_check.success %}
+        <div class="alert alert-success" style="margin-bottom: 0;">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            IR Transmitter & Receiver verified.
+        </div>
+        {% else %}
+        <div class="alert alert-error" style="margin-bottom: 0;">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clip-rule="evenodd"></path>
+            </svg>
+            {{ self_check.error }}
+        </div>
+        {% endif %}
     </div>
     {% endif %}
-{% endif %}
+</div>
 
+<h3 style="margin: 32px 0 16px; font-weight: 600;">Select Device Type</h3>
 <div class="device-grid">
     {% for dtype, count in device_types.items() %}
-    <form method="post" action="{{ url('/device-type') }}" class="inline-form">
+    <form method="post" action="{{ url('/device-type') }}" style="display: contents;">
         <input type="hidden" name="session_id" value="{{ session_id }}">
         <input type="hidden" name="device_type" value="{{ dtype }}">
         <button type="submit" class="device-card">
             <span class="device-name">{{ dtype }}</span>
-            <span class="device-count">{{ count }} devices</span>
+            <span class="device-count">{{ count }} profiles</span>
         </button>
     </form>
     {% endfor %}
 </div>
 
-<div class="learn-separator">
-    <span>or</span>
-</div>
-
-<div class="learn-entry">
-    <p class="learn-entry-text">Remote not in the database? Point your physical remote at the ESP32 and teach it directly.</p>
+<div class="glass-card" style="margin-top: 48px; text-align: center;">
+    <h3 style="margin-bottom: 8px;">Don't see your device?</h3>
+    <p class="subtitle" style="margin-bottom: 24px; font-size: 15px;">Capture codes directly from your physical remote.
+    </p>
     <form method="post" action="{{ url('/learn') }}">
         <input type="hidden" name="session_id" value="{{ session_id }}">
-        <button type="submit" class="btn btn-secondary btn-wide">Learn from Remote</button>
+        <button type="submit" class="btn btn-primary btn-large">Enter Learn Mode</button>
     </form>
 </div>
 {% endblock %}
