@@ -80,7 +80,7 @@ def generate_yaml(session: WizardSession) -> str:
             lines.append(f"          command: 0x{cmd.data['command']:02X}")
         elif cmd.service == "send_ir_coolix":
             lines.append(f"      - remote_transmitter.transmit_coolix:")
-            lines.append(f"          data: 0x{cmd.data['data']:06X}")
+            lines.append(f"          first: 0x{cmd.data['first']:06X}")
         elif cmd.service == "send_ir_pronto":
             lines.append(f"      - remote_transmitter.transmit_pronto:")
             lines.append(f"          data: \"{cmd.data['data']}\"")
@@ -214,10 +214,10 @@ api:
 
     - service: send_ir_coolix
       variables:
-        data: int
+        first: int
       then:
         - remote_transmitter.transmit_coolix:
-            data: !lambda 'return data;'
+            first: !lambda 'return first;'
 
     - service: send_ir_raw
       variables:

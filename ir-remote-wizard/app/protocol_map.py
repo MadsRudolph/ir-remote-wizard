@@ -117,8 +117,8 @@ def _convert_dish(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
 
 
 def _convert_coolix(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
-    data = _hex_bytes_to_full_int(command_hex)
-    return ESPHomeIRCommand("send_ir_coolix", {"data": data})
+    first = _hex_bytes_to_full_int(command_hex)
+    return ESPHomeIRCommand("send_ir_coolix", {"first": first})
 
 
 def _convert_raw(raw_data: str) -> ESPHomeIRCommand:

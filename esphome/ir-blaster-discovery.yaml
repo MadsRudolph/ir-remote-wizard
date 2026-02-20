@@ -112,10 +112,10 @@ api:
 
     - service: send_ir_coolix
       variables:
-        data: int
+        first: int
       then:
         - remote_transmitter.transmit_coolix:
-            data: !lambda 'return data;'
+            first: !lambda 'return first;'
 
     - service: send_ir_raw
       variables:
