@@ -1,12 +1,21 @@
 # Changelog
 
+## 0.3.4
+- **Mushroom Dashboard Cards**: Generated dashboard YAML now uses `custom:mushroom-template-card` in `custom:stack-in-card` with `horizontal-stack` pairs, matching common HA dashboard styles. Includes per-category icon colors.
+
+## 0.3.2
+- **Fix: Multi-line Pronto Parsing**: Rewrote Pronto log parser with a two-pass approach. ESPHome splits Pronto data across 2-3 log lines with component prefixes — the new parser correctly collects hex data across line boundaries.
+
+## 0.3.1
+- **Fix: Coolix Protocol**: ESPHome's `transmit_coolix` requires `first` parameter, not `data`.
+
 ## 0.3.0
 - **No More Reflashing**: Results now generate Home Assistant scripts instead of ESPHome button YAML. Flash the ESP32 once with the universal firmware, then just "Reload Scripts" in HA for instant updates.
 - **HA Script Output**: New primary output format writes to `scripts.yaml` — each confirmed button becomes a callable HA script with proper icons.
-- **Dashboard Card**: Auto-generated Lovelace button card snippet that calls the new scripts.
+- **Dashboard Card**: Auto-generated Lovelace dashboard card snippet that calls the new scripts.
 - **6 New Protocols**: Added native support for LG, Panasonic, Pioneer, JVC, Dish, and Coolix (no more raw-only fallback for these).
 - **Universal Firmware**: ESPHome config template now includes all protocol services out of the box.
-- **ESPHome YAML Preserved**: Still available in a collapsible section for advanced users who prefer firmware-baked buttons.
+- **ESPHome YAML Preserved**: Still available in a collapsible section on the results page for advanced users who prefer firmware-baked buttons.
 
 ## 0.2.3
 - **Connectivity Fix**: Restored `web_server` to the Full Config template so you can continue to access your device directly via its IP address in the browser.
