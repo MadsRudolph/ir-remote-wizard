@@ -236,25 +236,67 @@ class ESPHomeIRClient:
         "Pronto": 7,
     }
 
+    @staticmethod
+    def _extract_hex_words(line: str) -> list[str]:
+        """Extract 4-digit hex words from a log line, ignoring any log prefix."""
+        return re.findall(r'\b([0-9A-Fa-f]{4})\b', line)
+
     def _parse_ir_logs(self, log_lines: list[str]) -> dict:
         """Parse collected log lines and return the best IR code found."""
         parsed: list[dict] = []
 
-        # Pre-process: join Pronto lines where data= is on one line and hex on the next
-        merged_lines: list[str] = []
-        i = 0
-        while i < len(log_lines):
-            line = log_lines[i]
-            if re.search(r"Received Pronto: data=\s*$", line):
-                # Data is on the next line — merge them
-                if i + 1 < len(log_lines):
-                    merged_lines.append(line.rstrip() + " " + log_lines[i + 1].strip())
-                    i += 2
-                    continue
-            merged_lines.append(line)
-            i += 1
+        # --- Pass 1: Collect multi-line Pronto codes ---
+        # ESPHome splits Pronto across lines:
+        #   "[...]: Received Pronto: data="
+        #   "[...]: 0000 006D 000D 0000 002F ..."
+        #   "[...]: 0016 0041 0015 0041 ..."  (optional continuation)
+        pronto_codes: list[str] = []
+        current_hex: list[str] = []
+        collecting = False
 
-        for line in merged_lines:
+        for line in log_lines:
+            if "Received Pronto: data=" in line:
+                # Save previous collection if any
+                if current_hex:
+                    pronto_codes.append(" ".join(current_hex))
+                current_hex = []
+                collecting = True
+                # Check for inline data after "data="
+                m = re.search(r"data=\s*((?:[0-9A-Fa-f]{4}\s*)+)", line)
+                if m:
+                    current_hex.append(m.group(1).strip())
+                continue
+
+            if collecting:
+                # Continuation line — extract just the hex words
+                hex_words = self._extract_hex_words(line)
+                if hex_words:
+                    current_hex.append(" ".join(hex_words))
+                else:
+                    # Non-hex line ends the collection
+                    if current_hex:
+                        pronto_codes.append(" ".join(current_hex))
+                        current_hex = []
+                    collecting = False
+
+        # Don't forget the last one
+        if current_hex:
+            pronto_codes.append(" ".join(current_hex))
+
+        # Add valid Pronto codes to parsed results
+        for pronto_data in pronto_codes:
+            parts = pronto_data.split()
+            if len(parts) >= 8:  # minimum meaningful Pronto
+                parsed.append({
+                    "protocol": "Pronto",
+                    "address": None,
+                    "command": None,
+                    "raw_data": pronto_data,
+                    "display": f"Pronto ({len(parts)} words)",
+                })
+
+        # --- Pass 2: Parse single-line protocols ---
+        for line in log_lines:
             # NEC: address=0xXXXX, command=0xXXXX
             m = re.search(
                 r"Received NEC: address=0x([0-9A-Fa-f]+), command=0x([0-9A-Fa-f]+)",
@@ -433,25 +475,6 @@ class ESPHomeIRClient:
                     "raw_data": None,
                     "display": f"Coolix data=0x{m.group(1)}",
                 })
-                continue
-
-            # Pronto: data= followed by hex string(s)
-            m = re.search(
-                r"Received Pronto: data=\s*(.+)",
-                line,
-            )
-            if m:
-                pronto_data = m.group(1).strip()
-                # Filter noise: Pronto with < 4 burst pairs is garbage
-                parts = pronto_data.split()
-                if len(parts) >= 8:  # minimum meaningful Pronto
-                    parsed.append({
-                        "protocol": "Pronto",
-                        "address": None,
-                        "command": None,
-                        "raw_data": pronto_data,
-                        "display": f"Pronto ({len(parts)} words)",
-                    })
                 continue
 
         if not parsed:
