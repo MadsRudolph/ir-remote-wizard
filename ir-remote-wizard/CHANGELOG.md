@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.0
+- **Learn from Button Picker**: Users can now enter Learn Mode directly from the button picker via "Capture from Remote". Captured buttons are added to the saved list, and "Back to Button Picker" returns to the picker seamlessly. Standalone learn mode is unchanged.
+- **UI Cleanup**: Removed shimmer hover effects on glass cards and sweep animations on interactive/device/brand cards. Replaced pulse wave visualization with hex code display (address + command) on the discovery page and a simple status line during narrowing.
+- **JS Cleanup**: Removed pulse wave init and bulk blast pulse toggling.
+
 ## 0.6.0
 - **Binary Search Narrowing**: After Bulk Blast confirms a working code, a binary search pinpoints the exact code in ~log2(N) rounds instead of taking the union of all candidates. Results in a far more precise button picker with fewer irrelevant buttons.
 - **UI Refresh**: Aurora background with animated gradient blobs, shimmer-on-hover glass cards, redesigned progress bar with connectors, monospace code font (Fira Code), custom scrollbar styling, and overall polish pass across all pages.

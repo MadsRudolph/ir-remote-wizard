@@ -752,6 +752,18 @@ async def learn_delete(
     })
 
 
+@app.post("/learn/back-to-picker", response_class=HTMLResponse)
+async def learn_back_to_picker(request: Request, session_id: str = Form(...)):
+    """Return from learn mode to the button picker."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    engine._load_button_candidates(session)
+    return _render(request, "button_picker.html",
+                   _button_picker_context(session, session_id))
+
+
 @app.post("/learn/done", response_class=HTMLResponse)
 async def learn_done(request: Request, session_id: str = Form(...)):
     """Finish learn mode and go to results."""

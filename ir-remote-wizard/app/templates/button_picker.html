@@ -54,17 +54,19 @@
         Tap a button to send the IR code. If it works, press Save.
     </p>
 
-    <div class="pulse-container">
-        <div class="pulse-wave"></div>
-    </div>
-
     {% if testing is defined and testing %}
     <div style="margin: 24px 0; padding: 16px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px;">
         <p style="font-weight: 500; margin-bottom: 4px;">Testing: <code>{{ testing.button_name }}</code></p>
-        <p style="font-size: 13px; color: var(--text-secondary);">
+        <p class="code-info" style="font-size: 13px; margin-bottom: 8px;">
             Protocol: <code>{{ testing.protocol }}</code>
             {% if testing.category %} | Category: {{ testing.category }}{% endif %}
         </p>
+        {% if testing.address or testing.command %}
+        <div class="hex-display" style="margin-top: 8px;">
+            {% if testing.address %}<span class="hex-pair"><span class="hex-label">Addr</span><span class="hex-value">0x{{ testing.address }}</span></span>{% endif %}
+            {% if testing.command %}<span class="hex-pair"><span class="hex-label">Cmd</span><span class="hex-value">0x{{ testing.command }}</span></span>{% endif %}
+        </div>
+        {% endif %}
         <form method="post" action="{{ url('/pick-button/save') }}" style="margin-top: 12px;">
             <input type="hidden" name="session_id" value="{{ session_id }}">
             <input type="hidden" name="button_idx" value="{{ testing_idx }}">
@@ -96,6 +98,16 @@
         </div>
     </div>
     {% endfor %}
+</div>
+
+<div style="margin-top: 24px; text-align: center;">
+    <form method="post" action="{{ url('/learn') }}" class="inline-form">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <button type="submit" class="btn btn-secondary btn-wide">Capture from Remote</button>
+    </form>
+    <p style="color: var(--text-secondary); font-size: 13px; margin-top: 8px;">
+        Have a button that's not listed? Capture it from your physical remote.
+    </p>
 </div>
 
 {% if session.confirmed_buttons %}

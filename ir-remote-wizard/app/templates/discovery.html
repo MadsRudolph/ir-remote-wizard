@@ -50,9 +50,12 @@
             {% if candidate.brands %} — Brands: {{ candidate.brands | join(", ") }}{% endif %}
         </p>
 
-        <div class="pulse-container">
-            <div class="pulse-wave"></div>
+        {% if candidate.address or candidate.command %}
+        <div class="hex-display">
+            {% if candidate.address %}<span class="hex-pair"><span class="hex-label">Addr</span><span class="hex-value">0x{{ candidate.address }}</span></span>{% endif %}
+            {% if candidate.command %}<span class="hex-pair"><span class="hex-label">Cmd</span><span class="hex-value">0x{{ candidate.command }}</span></span>{% endif %}
         </div>
+        {% endif %}
     </div>
 
     <p style="text-align: center; margin-bottom: 24px; color: var(--text-secondary);">

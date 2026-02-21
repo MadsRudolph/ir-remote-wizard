@@ -3,11 +3,21 @@
 {% block subtitle %}<p class="subtitle">Learn Mode: Capture IR codes from your remote</p>{% endblock %}
 
 {% block progress %}
+{% if session.matched_device_ids %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step done">2. Device</div>
+    <div class="step done">3. Brand</div>
+    <div class="step active">4. Discover</div>
+    <div class="step">5. Results</div>
+</div>
+{% else %}
 <div class="progress-bar">
     <div class="step done">1. Connect</div>
     <div class="step active">2. Learn</div>
     <div class="step">3. Results</div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block content %}
@@ -33,9 +43,12 @@
     {% if capture is defined and capture and capture.success %}
     <div class="discovery-info">
         <h2 style="font-size: 24px;">Code Captured</h2>
-        <div class="pulse-container pulse-active" style="margin: 20px 0;">
-            <div class="pulse-wave"></div>
+        {% if capture.address or capture.command %}
+        <div class="hex-display" style="margin: 20px 0;">
+            {% if capture.address %}<span class="hex-pair"><span class="hex-label">Addr</span><span class="hex-value">0x{{ capture.address }}</span></span>{% endif %}
+            {% if capture.command %}<span class="hex-pair"><span class="hex-label">Cmd</span><span class="hex-value">0x{{ capture.command }}</span></span>{% endif %}
         </div>
+        {% endif %}
         <p class="code-info">
             Protocol: <code>{{ capture.protocol }}</code>
             {% if capture.address %} | Addr: <code>0x{{ capture.address }}</code>{% endif %}
@@ -129,10 +142,18 @@
         {% endfor %}
     </div>
 
-    <form method="post" action="{{ url('/learn/done') }}" style="margin-top: 24px;">
-        <input type="hidden" name="session_id" value="{{ session_id }}">
-        <button type="submit" class="btn btn-success btn-wide">Generate Final YAML</button>
-    </form>
+    <div style="display: flex; gap: 12px; margin-top: 24px;">
+        {% if session.matched_device_ids %}
+        <form method="post" action="{{ url('/learn/back-to-picker') }}" style="flex: 1;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-secondary btn-wide">Back to Button Picker</button>
+        </form>
+        {% endif %}
+        <form method="post" action="{{ url('/learn/done') }}" style="flex: 1;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <button type="submit" class="btn btn-success btn-wide">Generate Final YAML</button>
+        </form>
+    </div>
 </div>
 {% endif %}
 

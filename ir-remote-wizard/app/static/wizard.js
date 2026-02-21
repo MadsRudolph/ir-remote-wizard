@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function () {
     initParticles();
     initPersistence();
     initLoadingStates();
-    initPulseWave();
     initClipboard();
     initPageTransitions();
 });
@@ -139,19 +138,7 @@ function initLoadingStates() {
     });
 }
 
-/* ─── Pulse Wave ─── */
-function initPulseWave() {
-    const pulseContainer = document.querySelector('.pulse-container');
-    if (pulseContainer) {
-        const sendBtn = document.querySelector('form[action*="/send-test"] button');
-        if (sendBtn) {
-            sendBtn.addEventListener('click', () => {
-                pulseContainer.classList.add('pulse-active');
-                setTimeout(() => pulseContainer.classList.remove('pulse-active'), 2000);
-            });
-        }
-    }
-}
+
 
 /* ─── Clipboard ─── */
 function initClipboard() {
@@ -192,14 +179,13 @@ function initPageTransitions() {
 window.startBulkBlast = async function (session_id) {
     const btn = document.getElementById('bulk-blast-btn');
     const status = document.getElementById('bulk-status');
-    const pulseContainer = document.querySelector('.pulse-container');
+
 
     if (!btn) return;
 
     btn.disabled = true;
     btn.innerText = '🚀 Blasting...';
-    if (status) status.innerText = 'Sending sequence of power codes...';
-    if (pulseContainer) pulseContainer.classList.add('pulse-active');
+
 
     try {
         const formData = new FormData();
@@ -227,8 +213,6 @@ window.startBulkBlast = async function (session_id) {
     } catch (e) {
         console.error(e);
         btn.innerText = '❌ Error';
-    } finally {
-        if (pulseContainer) pulseContainer.classList.remove('pulse-active');
     }
 };
 
