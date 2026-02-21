@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.6
+- **Fix: Sony SIRC Protocol**: ESPHome represents Sony data with first-transmitted bit as MSB, but SIRC sends LSB-first. Data word is now bit-reversed to match ESPHome's encoding (e.g. TV Power: logical `0x95` → `0xA90`).
+
 ## 0.3.5
 - **Fix: Bulk Blast (Try All)**: Button now works correctly behind HA Ingress — the fetch URL was missing the ingress path prefix.
 - **Fix: Flipper NEC Protocol**: Standard NEC now adds complement bytes as ESPHome expects (e.g. address `0x04` → `0xFB04`). NECext separated to handle 16-bit addresses correctly.

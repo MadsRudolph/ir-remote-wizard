@@ -70,6 +70,19 @@ def _reverse_bits(b: int) -> int:
     return b
 
 
+def _reverse_bits_n(value: int, n: int) -> int:
+    """Reverse the bit order of an n-bit value.
+
+    _reverse_bits_n(0x95, 12) → 0xA90
+    (000010010101 → 101010010000)
+    """
+    result = 0
+    for _ in range(n):
+        result = (result << 1) | (value & 1)
+        value >>= 1
+    return result
+
+
 # Protocol name → (ESPHome service, converter function)
 # The converter takes (address_hex, command_hex) and returns ESPHomeIRCommand
 
@@ -117,14 +130,16 @@ def _convert_rc6(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
 
 
 def _convert_sirc(address_hex: str, command_hex: str, nbits: int = 12) -> ESPHomeIRCommand:
+    """Sony SIRC: build logical word then bit-reverse for ESPHome.
+
+    ESPHome represents Sony data with first-transmitted bit as MSB,
+    but SIRC sends LSB-first.  Flipper stores address=0x01, command=0x15
+    for TV power → logical 0x95 → reversed 12-bit → 0xA90.
+    """
     address = _hex_bytes_to_int(address_hex, 2)
     command = _hex_bytes_to_int(command_hex, 1)
-    if nbits == 12:
-        data = (address << 7) | (command & 0x7F)
-    elif nbits == 15:
-        data = (address << 7) | (command & 0x7F)
-    else:  # 20
-        data = (address << 7) | (command & 0x7F)
+    logical = (address << 7) | (command & 0x7F)
+    data = _reverse_bits_n(logical, nbits)
     return ESPHomeIRCommand("send_ir_sony", {"data": data, "nbits": nbits})
 
 
