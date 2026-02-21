@@ -140,10 +140,11 @@ class ESPHomeIRClient:
             await self.connect()
 
         try:
-            await self._client.execute_service(
-                await self._find_service(cmd.service),
-                cmd.data,
-            )
+            svc = await self._find_service(cmd.service)
+            for _ in range(cmd.repeat):
+                await self._client.execute_service(svc, cmd.data)
+                if cmd.repeat > 1:
+                    await asyncio.sleep(0.045)  # ~45ms gap between SIRC repeats
             return True
         except Exception as e:
             logger.error("Failed to send IR command: %s", e)

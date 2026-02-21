@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.7
+- **Fix: Sony SIRC Repeat**: Sony devices require the command to be sent 3+ times to register. Added repeat support to IR commands — SIRC now sends 3 transmissions with ~45ms gaps, matching real remote behavior.
+
 ## 0.3.6
 - **Fix: Sony SIRC Protocol**: ESPHome represents Sony data with first-transmitted bit as MSB, but SIRC sends LSB-first. Data word is now bit-reversed to match ESPHome's encoding (e.g. TV Power: logical `0x95` → `0xA90`).
 

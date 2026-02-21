@@ -27,6 +27,7 @@ class ESPHomeIRCommand:
     """An IR command ready to send via an ESPHome API service call."""
     service: str
     data: dict[str, int | list[int]]
+    repeat: int = 1  # Sony SIRC requires ≥3 transmissions
 
 
 def _hex_bytes_to_int(hex_str: str, num_bytes: int = 2) -> int:
@@ -140,7 +141,7 @@ def _convert_sirc(address_hex: str, command_hex: str, nbits: int = 12) -> ESPHom
     command = _hex_bytes_to_int(command_hex, 1)
     logical = (address << 7) | (command & 0x7F)
     data = _reverse_bits_n(logical, nbits)
-    return ESPHomeIRCommand("send_ir_sony", {"data": data, "nbits": nbits})
+    return ESPHomeIRCommand("send_ir_sony", {"data": data, "nbits": nbits}, repeat=3)
 
 
 def _convert_lg(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
