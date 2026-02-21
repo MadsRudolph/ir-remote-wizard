@@ -468,6 +468,27 @@ async def pick_button_save(
                                           just_saved=button["button_name"]))
 
 
+@app.post("/pick-button/delete", response_class=HTMLResponse)
+async def pick_button_delete(
+    request: Request,
+    session_id: str = Form(...),
+    button_index: int = Form(...),
+):
+    """Remove a saved button by index."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    if 0 <= button_index < len(session.confirmed_buttons):
+        removed = session.confirmed_buttons.pop(button_index)
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id,
+                                              just_removed=removed.name))
+
+    return _render(request, "button_picker.html",
+                   _button_picker_context(session, session_id))
+
+
 @app.post("/save-yaml", response_class=HTMLResponse)
 async def save_yaml_route(
     request: Request,

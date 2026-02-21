@@ -37,6 +37,17 @@
 </div>
 {% endif %}
 
+{% if just_removed is defined and just_removed %}
+<div class="alert alert-error">
+    <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clip-rule="evenodd"></path>
+    </svg>
+    Removed "{{ just_removed }}" button.
+</div>
+{% endif %}
+
 <div class="glass-card">
     <h2 style="font-size: 24px; margin-bottom: 8px;">Available Buttons</h2>
     <p style="color: var(--text-secondary); margin-bottom: 24px;">
@@ -92,7 +103,14 @@
     <h3 style="font-size: 16px; margin-bottom: 20px;">Saved Buttons ({{ session.confirmed_buttons | length }})</h3>
     <div style="display: flex; flex-wrap: wrap; gap: 8px;">
         {% for btn in session.confirmed_buttons %}
-        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">{{ btn.name }}</span>
+        <form method="post" action="{{ url('/pick-button/delete') }}" class="inline-form" style="display: inline;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="button_index" value="{{ loop.index0 }}">
+            <button type="submit" class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success); cursor: pointer; border: 1px solid transparent; font-family: inherit; font-size: inherit; transition: border-color 0.2s, background 0.2s;"
+                onmouseover="this.style.borderColor='var(--error)'; this.style.background='rgba(239,68,68,0.15)'; this.style.color='var(--error)'"
+                onmouseout="this.style.borderColor='transparent'; this.style.background='rgba(16,185,129,0.2)'; this.style.color='var(--success)'"
+                title="Remove {{ btn.name }}">{{ btn.name }} &times;</button>
+        </form>
         {% endfor %}
     </div>
 </div>

@@ -4,6 +4,7 @@
 - **Device Memory**: Configured remotes are now persisted across sessions. After saving scripts, the device profile (brand, type, matched codes, buttons) is stored in `.ir_wizard_devices.json`.
 - **Home Page**: New landing page shows all saved devices with button counts. Click "Edit" to resume, or "Configure New Device" to start fresh.
 - **Edit Flow**: Editing a saved device restores the session and skips straight to the button picker after connecting to the ESP32. Existing buttons show as green, and you can add more.
+- **Remove Saved Buttons**: Saved buttons in the button picker can now be removed by clicking them. Chips show an × and turn red on hover.
 - **Script Updates**: When saving scripts for an edited device, old script entries are replaced instead of being duplicated.
 
 ## 0.4.0
