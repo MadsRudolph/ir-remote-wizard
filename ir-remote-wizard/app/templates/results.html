@@ -105,11 +105,32 @@
 function copyToClipboard(elementId, btn) {
     const code = document.getElementById(elementId);
     if (!code) return;
-    navigator.clipboard.writeText(code.textContent).then(() => {
+    const text = code.textContent;
+
+    function onSuccess() {
         const original = btn.textContent;
         btn.textContent = 'Copied!';
         setTimeout(() => { btn.textContent = original; }, 2000);
-    });
+    }
+
+    // Try modern API first, fall back to execCommand for HA ingress iframes
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(onSuccess).catch(() => fallbackCopy(text, onSuccess));
+    } else {
+        fallbackCopy(text, onSuccess);
+    }
+}
+
+function fallbackCopy(text, onSuccess) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); onSuccess(); }
+    catch(e) {}
+    document.body.removeChild(ta);
 }
 </script>
 {% endblock %}
