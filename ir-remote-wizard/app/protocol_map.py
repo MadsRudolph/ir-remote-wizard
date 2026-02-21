@@ -2,6 +2,18 @@
 
 Flipper stores addresses/commands as space-separated hex bytes in little-endian order.
 For example: "34 DB 00 00" → 0xDB34 (16-bit NEC extended address).
+
+Key differences between Flipper and ESPHome encodings:
+
+NEC family: Flipper stores only the meaningful bytes without complements.
+  Standard NEC stores 8-bit address + 8-bit command; the complement bytes
+  (~address, ~command) are implicit.  ESPHome expects the full 16-bit values
+  with complements already included (e.g. address 0x04 → 0xFB04).
+
+Samsung32: Flipper stores address/command in LSB-first logical order, but
+  ESPHome's Samsung transmitter sends bits MSB-first.  Each byte must be
+  bit-reversed before building the 32-bit data word.  The Samsung frame is
+  address, address (repeated), command, ~command.
 """
 
 from __future__ import annotations
@@ -39,19 +51,50 @@ def _hex_bytes_to_full_int(hex_str: str) -> int:
     return value
 
 
+def _add_complement(byte_val: int) -> int:
+    """Build a 16-bit value from an 8-bit byte and its complement.
+
+    0x04 → 0xFB04  (low byte = value, high byte = ~value)
+    """
+    return byte_val | ((~byte_val & 0xFF) << 8)
+
+
+def _reverse_bits(b: int) -> int:
+    """Reverse the bits of an 8-bit value.
+
+    0x07 (00000111) → 0xE0 (11100000)
+    """
+    b = ((b & 0xF0) >> 4) | ((b & 0x0F) << 4)
+    b = ((b & 0xCC) >> 2) | ((b & 0x33) << 2)
+    b = ((b & 0xAA) >> 1) | ((b & 0x55) << 1)
+    return b
+
+
 # Protocol name → (ESPHome service, converter function)
 # The converter takes (address_hex, command_hex) and returns ESPHomeIRCommand
 
 def _convert_nec(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    """Standard NEC: 8-bit address + complement, 8-bit command + complement."""
+    addr_byte = _hex_bytes_to_int(address_hex, 1)
+    cmd_byte = _hex_bytes_to_int(command_hex, 1)
+    address = _add_complement(addr_byte)
+    command = _add_complement(cmd_byte)
+    return ESPHomeIRCommand("send_ir_nec", {"address": address, "command": command})
+
+
+def _convert_necext(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
+    """Extended NEC: 16-bit address (no complement), 8-bit command + complement."""
     address = _hex_bytes_to_int(address_hex, 2)
-    command = _hex_bytes_to_int(command_hex, 2)
+    cmd_byte = _hex_bytes_to_int(command_hex, 1)
+    command = _add_complement(cmd_byte)
     return ESPHomeIRCommand("send_ir_nec", {"address": address, "command": command})
 
 
 def _convert_samsung32(address_hex: str, command_hex: str) -> ESPHomeIRCommand:
-    address = _hex_bytes_to_int(address_hex, 1)
-    command = _hex_bytes_to_int(command_hex, 1)
-    data = (address << 24) | ((~address & 0xFF) << 16) | (command << 8) | (~command & 0xFF)
+    """Samsung32: bit-reverse bytes, frame = addr, addr, cmd, ~cmd."""
+    addr = _reverse_bits(_hex_bytes_to_int(address_hex, 1))
+    cmd = _reverse_bits(_hex_bytes_to_int(command_hex, 1))
+    data = (addr << 24) | (addr << 16) | (cmd << 8) | (~cmd & 0xFF)
     return ESPHomeIRCommand("send_ir_samsung", {"data": data})
 
 
@@ -130,9 +173,9 @@ def _convert_raw(raw_data: str) -> ESPHomeIRCommand:
 # Mapping from Flipper protocol names to converter functions
 PROTOCOL_CONVERTERS: dict[str, callable] = {
     "NEC": _convert_nec,
-    "NECext": _convert_nec,
+    "NECext": _convert_necext,
     "NEC42": _convert_nec,
-    "NEC42ext": _convert_nec,
+    "NEC42ext": _convert_necext,
     "Samsung32": _convert_samsung32,
     "Samsung36": _convert_samsung36,
     "RC5": _convert_rc5,

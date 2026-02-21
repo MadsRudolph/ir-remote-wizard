@@ -68,7 +68,7 @@
         </form>
 
         {% if phase == "identify" and session.identify_progress[1] > 1 %}
-        <button id="bulk-blast-btn" class="btn btn-secondary btn-wide" onclick="startBulkBlast('{{ session_id }}')">
+        <button id="bulk-blast-btn" class="btn btn-secondary btn-wide" data-url="{{ url('/bulk-blast') }}" onclick="startBulkBlast('{{ session_id }}')">
             Bulk Blast (Try All)
         </button>
         <p id="bulk-status" class="hint" style="text-align: center; opacity: 0.7;"></p>

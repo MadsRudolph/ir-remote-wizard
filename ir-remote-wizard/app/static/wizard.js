@@ -100,7 +100,8 @@ window.startBulkBlast = async function (session_id) {
         const formData = new FormData();
         formData.append('session_id', session_id);
 
-        const response = await fetch('/bulk-blast', {
+        const url = btn.dataset.url || '/bulk-blast';
+        const response = await fetch(url, {
             method: 'POST',
             body: formData
         });
