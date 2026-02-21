@@ -133,6 +133,38 @@ class DiscoveryEngine:
 
         return session
 
+    def confirm_bulk_blast(self, session_id: str, worked: bool) -> WizardSession:
+        """Handle user confirmation after bulk-blasting all power candidates."""
+        session = self.sessions[session_id]
+
+        if worked:
+            # We don't know which specific code worked, so collect all device IDs
+            all_device_ids = []
+            all_brands = set()
+            for candidate in session.power_candidates:
+                all_device_ids.extend(candidate["device_ids"])
+                all_brands.update(candidate["brands"])
+
+            session.matched_device_ids = list(set(all_device_ids))
+            session.matched_brand = sorted(all_brands)[0] if all_brands else ""
+
+            # Add the first power candidate as the confirmed power button
+            first = session.power_candidates[0]
+            session.confirmed_buttons.append(ConfirmedButton(
+                name="Power",
+                protocol=first["protocol"],
+                address=first["address"],
+                command=first["command"],
+                raw_data=first["raw_data"],
+            ))
+
+            session.phase = WizardPhase.MAP_BUTTONS
+            self._load_button_candidates(session)
+        else:
+            session.phase = WizardPhase.RESULTS
+
+        return session
+
     def _load_button_candidates(self, session: WizardSession) -> None:
         """Load all button candidates for matched devices."""
         buttons = self.db.get_unique_buttons_for_devices(session.matched_device_ids)

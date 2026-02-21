@@ -1,6 +1,6 @@
 ---
 name: "IR Remote Wizard"
-version: "0.3.8"
+version: "0.3.9"
 slug: "ir_remote_wizard"
 description: "Auto-discover IR codes for any device using the Flipper-IRDB database"
 url: "https://github.com/MadsRudolph/ir-remote-wizard"

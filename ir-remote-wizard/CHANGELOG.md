@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.9
+- **Bulk Blast Confirmation Flow**: After blasting all power codes, Yes/No buttons now appear asking if the device responded. "Yes" collects all matching device IDs and proceeds to button mapping. "No" skips to results.
+
 ## 0.3.8
 - **Fix: Sony SIRC repeat in HA scripts**: Generated HA scripts now emit 3 service calls with 45ms delays for Sony SIRC, matching the repeat behavior needed for Sony devices to register the command.
 

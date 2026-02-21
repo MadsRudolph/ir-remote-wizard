@@ -108,14 +108,12 @@ window.startBulkBlast = async function (session_id) {
 
         if (response.ok) {
             btn.innerText = '✅ Sequence Done';
-            if (status) status.innerText = 'Sequence complete. Did the device turn on?';
+            if (status) status.innerText = 'Sequence complete. Did the device respond?';
 
-            // Show confirmation UI by simulating a "sent" state if needed
-            // For now, let's just show the buttons if they were hidden
-            const confirmSection = document.querySelector('.confirm-section');
-            if (confirmSection) {
-                confirmSection.style.display = 'block';
-                confirmSection.style.animation = 'fadeInUp 0.4s ease-out';
+            const bulkConfirm = document.getElementById('bulk-confirm-section');
+            if (bulkConfirm) {
+                bulkConfirm.style.display = 'block';
+                bulkConfirm.style.animation = 'fadeInUp 0.4s ease-out';
             }
         } else {
             btn.innerText = '❌ Failed';
@@ -125,11 +123,7 @@ window.startBulkBlast = async function (session_id) {
         console.error(e);
         btn.innerText = '❌ Error';
     } finally {
-        setTimeout(() => {
-            if (pulseContainer) pulseContainer.classList.remove('pulse-active');
-            btn.disabled = false;
-            btn.innerText = 'Bulk Blast (Try All)';
-        }, 3000);
+        if (pulseContainer) pulseContainer.classList.remove('pulse-active');
     }
 };
 

@@ -94,6 +94,25 @@
     </div>
     {% endif %}
 
+    {% if phase == "identify" and session.identify_progress[1] > 1 %}
+    <div id="bulk-confirm-section" class="confirm-section"
+        style="display: none; margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--glass-border);">
+        <p style="font-weight: 500; margin-bottom: 16px;">Did the device respond to any code?</p>
+        <div class="confirm-buttons">
+            <form method="post" action="{{ url('/bulk-confirm') }}" class="inline-form" style="flex: 1;">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="worked" value="yes">
+                <button type="submit" class="btn btn-success btn-wide">Yes, It Worked!</button>
+            </form>
+            <form method="post" action="{{ url('/bulk-confirm') }}" class="inline-form" style="flex: 1;">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="worked" value="no">
+                <button type="submit" class="btn btn-danger btn-wide">No Response</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
     {% if phase == "map_buttons" %}
     <div class="skip-section" style="margin-top: 32px;">
         <form method="post" action="{{ url('/skip-to-results') }}" class="inline-form">

@@ -283,6 +283,35 @@ async def bulk_blast(
         return HTMLResponse(f"Blast failed: {str(e)}", status_code=500)
 
 
+@app.post("/bulk-confirm", response_class=HTMLResponse)
+async def bulk_confirm(
+    request: Request,
+    session_id: str = Form(...),
+    worked: str = Form(...),
+):
+    """Handle user confirmation after bulk blast."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    did_work = worked == "yes"
+    session = engine.confirm_bulk_blast(session_id, did_work)
+
+    if session.phase == WizardPhase.MAP_BUTTONS:
+        return _render(request, "discovery.html", {
+            "session_id": session_id,
+            "session": session,
+            "candidate": session.current_button,
+            "phase": "map_buttons",
+            "brand_found": session.matched_brand,
+        })
+    elif session.phase == WizardPhase.RESULTS:
+        return _render(request, "results.html",
+                       _results_context(session, session_id))
+
+    return RedirectResponse(_url(request, "/"))
+
+
 @app.post("/confirm", response_class=HTMLResponse)
 async def confirm(
     request: Request,
