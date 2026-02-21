@@ -150,11 +150,15 @@ def generate_ha_scripts(session: WizardSession) -> str:
         lines.append(f"  alias: \"{alias}\"")
         lines.append(f"  icon: {icon}")
         lines.append(f"  sequence:")
-        lines.append(f"    - action: {service_name}")
-        lines.append(f"      data:")
 
-        for key, value in cmd.data.items():
-            lines.append(f"        {key}: {_format_data_value(value)}")
+        for i in range(cmd.repeat):
+            lines.append(f"    - action: {service_name}")
+            lines.append(f"      data:")
+            for key, value in cmd.data.items():
+                lines.append(f"        {key}: {_format_data_value(value)}")
+            if cmd.repeat > 1 and i < cmd.repeat - 1:
+                lines.append(f"    - delay:")
+                lines.append(f"        milliseconds: 45")
 
         lines.append("")
 

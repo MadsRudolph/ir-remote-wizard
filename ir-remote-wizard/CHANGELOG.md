@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.3.8
+- **Fix: Sony SIRC repeat in HA scripts**: Generated HA scripts now emit 3 service calls with 45ms delays for Sony SIRC, matching the repeat behavior needed for Sony devices to register the command.
+
 ## 0.3.7
 - **Fix: Sony SIRC Repeat**: Sony devices require the command to be sent 3+ times to register. Added repeat support to IR commands — SIRC now sends 3 transmissions with ~45ms gaps, matching real remote behavior.
 
