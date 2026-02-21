@@ -234,21 +234,8 @@ async def send_test(
         })
 
     elif session.phase == WizardPhase.MAP_BUTTONS:
-        button = session.current_button
-        if button and ir_client:
-            await ir_client.send_ir_code(
-                button["protocol"],
-                button.get("address"),
-                button.get("command"),
-                button.get("raw_data"),
-            )
-        return _render(request, "discovery.html", {
-            "session_id": session_id,
-            "session": session,
-            "candidate": button,
-            "phase": "map_buttons",
-            "sent": True,
-        })
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id))
 
     return RedirectResponse(_url(request, "/"))
 
@@ -298,13 +285,8 @@ async def bulk_confirm(
     session = engine.confirm_bulk_blast(session_id, did_work)
 
     if session.phase == WizardPhase.MAP_BUTTONS:
-        return _render(request, "discovery.html", {
-            "session_id": session_id,
-            "session": session,
-            "candidate": session.current_button,
-            "phase": "map_buttons",
-            "brand_found": session.matched_brand,
-        })
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id))
     elif session.phase == WizardPhase.RESULTS:
         return _render(request, "results.html",
                        _results_context(session, session_id))
@@ -329,13 +311,8 @@ async def confirm(
         session = engine.confirm_power_code(session_id, did_work)
 
         if session.phase == WizardPhase.MAP_BUTTONS:
-            return _render(request, "discovery.html", {
-                "session_id": session_id,
-                "session": session,
-                "candidate": session.current_button,
-                "phase": "map_buttons",
-                "brand_found": session.matched_brand,
-            })
+            return _render(request, "button_picker.html",
+                           _button_picker_context(session, session_id))
         elif session.phase == WizardPhase.RESULTS:
             return _render(request, "results.html",
                            _results_context(session, session_id))
@@ -347,20 +324,6 @@ async def confirm(
                 "phase": "identify",
             })
 
-    elif session.phase == WizardPhase.MAP_BUTTONS:
-        session = engine.confirm_button(session_id, did_work)
-
-        if session.phase == WizardPhase.RESULTS:
-            return _render(request, "results.html",
-                           _results_context(session, session_id))
-        else:
-            return _render(request, "discovery.html", {
-                "session_id": session_id,
-                "session": session,
-                "candidate": session.current_button,
-                "phase": "map_buttons",
-            })
-
     return RedirectResponse(_url(request, "/"))
 
 
@@ -369,6 +332,91 @@ async def skip_to_results(request: Request, session_id: str = Form(...)):
     session = engine.skip_to_results(session_id)
     return _render(request, "results.html",
                    _results_context(session, session_id))
+
+
+def _button_picker_context(
+    session: WizardSession, session_id: str, **extra
+) -> dict:
+    """Build template context for the button picker page."""
+    saved_names = {b.name for b in session.confirmed_buttons}
+
+    # Tag each candidate with its index for form submission
+    for i, btn in enumerate(session.button_candidates):
+        btn["_idx"] = i
+
+    # Group by category, preserving order
+    from collections import OrderedDict
+    groups: OrderedDict[str, list] = OrderedDict()
+    for btn in session.button_candidates:
+        cat = btn.get("category", "Other")
+        groups.setdefault(cat, []).append(btn)
+
+    ctx = {
+        "session_id": session_id,
+        "session": session,
+        "grouped_buttons": list(groups.items()),
+        "saved_names": saved_names,
+        "brand_found": session.matched_brand or None,
+    }
+    ctx.update(extra)
+    return ctx
+
+
+@app.post("/pick-button/test", response_class=HTMLResponse)
+async def pick_button_test(
+    request: Request,
+    session_id: str = Form(...),
+    button_idx: int = Form(...),
+):
+    """Send a specific button's IR code for testing."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    if 0 <= button_idx < len(session.button_candidates):
+        button = session.button_candidates[button_idx]
+        if ir_client:
+            await ir_client.send_ir_code(
+                button["protocol"],
+                button.get("address"),
+                button.get("command"),
+                button.get("raw_data"),
+            )
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id,
+                                              testing=button, testing_idx=button_idx))
+
+    return _render(request, "button_picker.html",
+                   _button_picker_context(session, session_id))
+
+
+@app.post("/pick-button/save", response_class=HTMLResponse)
+async def pick_button_save(
+    request: Request,
+    session_id: str = Form(...),
+    button_idx: int = Form(...),
+):
+    """Save a tested button to the confirmed list."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    if 0 <= button_idx < len(session.button_candidates):
+        button = session.button_candidates[button_idx]
+        # Avoid duplicates
+        existing_names = {b.name for b in session.confirmed_buttons}
+        if button["button_name"] not in existing_names:
+            session.confirmed_buttons.append(ConfirmedButton(
+                name=button["button_name"],
+                protocol=button["protocol"],
+                address=button["address"],
+                command=button["command"],
+                raw_data=button["raw_data"],
+            ))
+
+    return _render(request, "button_picker.html",
+                   _button_picker_context(session, session_id,
+                                          just_saved=button["button_name"]))
 
 
 @app.post("/save-yaml", response_class=HTMLResponse)

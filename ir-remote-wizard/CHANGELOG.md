@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.4.0
+- **Button Picker UI**: Replaced the sequential one-by-one button testing with an interactive picker. All available buttons are shown grouped by category as clickable chips. Tap to test, then save the ones that work. Already-saved buttons are highlighted green.
+
 ## 0.3.9
 - **Bulk Blast Confirmation Flow**: After blasting all power codes, Yes/No buttons now appear asking if the device responded. "Yes" collects all matching device IDs and proceeds to button mapping. "No" skips to results.
 

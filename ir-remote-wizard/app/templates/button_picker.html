@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+<p class="subtitle">Step 4: Pick & test buttons</p>
+{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step done">2. Device</div>
+    <div class="step done">3. Brand</div>
+    <div class="step active">4. Discover</div>
+    <div class="step">5. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+{% if brand_found is defined and brand_found %}
+<div class="alert alert-success">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"></path>
+    </svg>
+    Match found! Brand: <strong>{{ brand_found }}</strong>.
+</div>
+{% endif %}
+
+{% if just_saved is defined and just_saved %}
+<div class="alert alert-success">
+    <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"></path>
+    </svg>
+    Saved "{{ just_saved }}" button.
+</div>
+{% endif %}
+
+<div class="glass-card">
+    <h2 style="font-size: 24px; margin-bottom: 8px;">Available Buttons</h2>
+    <p style="color: var(--text-secondary); margin-bottom: 24px;">
+        Tap a button to send the IR code. If it works, press Save.
+    </p>
+
+    <div class="pulse-container">
+        <div class="pulse-wave"></div>
+    </div>
+
+    {% if testing is defined and testing %}
+    <div style="margin: 24px 0; padding: 16px; background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px;">
+        <p style="font-weight: 500; margin-bottom: 4px;">Testing: <code>{{ testing.button_name }}</code></p>
+        <p style="font-size: 13px; color: var(--text-secondary);">
+            Protocol: <code>{{ testing.protocol }}</code>
+            {% if testing.category %} | Category: {{ testing.category }}{% endif %}
+        </p>
+        <form method="post" action="{{ url('/pick-button/save') }}" style="margin-top: 12px;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="button_idx" value="{{ testing_idx }}">
+            <button type="submit" class="btn btn-success btn-wide">Save "{{ testing.button_name }}"</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% for category, buttons in grouped_buttons %}
+    <div style="margin-bottom: 20px;">
+        <label style="color: var(--text-secondary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; display: block; margin-bottom: 8px;">{{ category }}</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            {% for btn in buttons %}
+            {% set is_saved = btn.button_name in saved_names %}
+            {% if is_saved %}
+            <span class="chip" style="background: rgba(16, 185, 129, 0.2); border-color: var(--success); color: var(--success); cursor: default;">
+                {{ btn.button_name }}
+            </span>
+            {% else %}
+            <form method="post" action="{{ url('/pick-button/test') }}" class="inline-form" style="display: inline;">
+                <input type="hidden" name="session_id" value="{{ session_id }}">
+                <input type="hidden" name="button_idx" value="{{ btn._idx }}">
+                <button type="submit" class="chip" style="cursor: pointer; font-family: inherit; font-size: inherit;">
+                    {{ btn.button_name }}
+                </button>
+            </form>
+            {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% if session.confirmed_buttons %}
+<div class="glass-card" style="margin-top: 32px; padding: 24px;">
+    <h3 style="font-size: 16px; margin-bottom: 20px;">Saved Buttons ({{ session.confirmed_buttons | length }})</h3>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        {% for btn in session.confirmed_buttons %}
+        <span class="badge" style="background: rgba(16, 185, 129, 0.2); color: var(--success);">{{ btn.name }}</span>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 24px; text-align: center;">
+    <form method="post" action="{{ url('/skip-to-results') }}" class="inline-form">
+        <input type="hidden" name="session_id" value="{{ session_id }}">
+        <button type="submit" class="btn btn-success btn-large btn-wide">Done — Generate Results</button>
+    </form>
+</div>
+{% endblock %}
