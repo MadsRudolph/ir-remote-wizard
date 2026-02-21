@@ -17,6 +17,7 @@ class WizardPhase(str, Enum):
     DEVICE_TYPE = "device_type"
     BRAND = "brand"
     IDENTIFY = "identify"
+    NARROWING = "narrowing"
     MAP_BUTTONS = "map_buttons"
     RESULTS = "results"
 
@@ -47,6 +48,11 @@ class WizardSession:
     matched_device_ids: list[int] = field(default_factory=list)
     matched_brand: str = ""
 
+    # Narrowing state (binary search after bulk blast)
+    narrowing_pool: list[int] = field(default_factory=list)
+    narrowing_tested: list[int] = field(default_factory=list)
+    narrowing_round: int = 0
+
     # Phase 2 (Map buttons) state
     button_candidates: list[dict] = field(default_factory=list)
     current_button_idx: int = 0
@@ -71,6 +77,13 @@ class WizardSession:
     @property
     def button_progress(self) -> tuple[int, int]:
         return (self.current_button_idx + 1, len(self.button_candidates))
+
+    @property
+    def narrowing_total_rounds(self) -> int:
+        """Estimate total rounds needed (log2 of initial candidate count)."""
+        import math
+        n = len(self.power_candidates)
+        return max(1, math.ceil(math.log2(n))) if n > 1 else 1
 
 
 class DiscoveryEngine:
@@ -154,31 +167,95 @@ class DiscoveryEngine:
         session = self.sessions[session_id]
 
         if worked:
-            # We don't know which specific code worked, so collect all device IDs
-            all_device_ids = []
-            all_brands = set()
-            for candidate in session.power_candidates:
-                all_device_ids.extend(candidate["device_ids"])
-                all_brands.update(candidate["brands"])
-
-            session.matched_device_ids = list(set(all_device_ids))
-            session.matched_brand = sorted(all_brands)[0] if all_brands else ""
-
-            # Add the first power candidate as the confirmed power button
-            first = session.power_candidates[0]
-            session.confirmed_buttons.append(ConfirmedButton(
-                name="Power",
-                protocol=first["protocol"],
-                address=first["address"],
-                command=first["command"],
-                raw_data=first["raw_data"],
-            ))
-
-            session.phase = WizardPhase.MAP_BUTTONS
-            self._load_button_candidates(session)
+            if len(session.power_candidates) > 1:
+                # Multiple candidates — start binary search narrowing
+                return self.start_narrowing(session_id)
+            else:
+                # Single candidate — resolve immediately
+                self._resolve_candidate(session, session.power_candidates[0])
         else:
             session.phase = WizardPhase.RESULTS
 
+        return session
+
+    def _resolve_candidate(self, session: WizardSession, candidate: dict) -> None:
+        """Resolve to a single candidate: set matched IDs and move to button mapping."""
+        session.matched_device_ids = candidate["device_ids"]
+        session.matched_brand = candidate["brands"][0] if candidate["brands"] else ""
+
+        session.confirmed_buttons.append(ConfirmedButton(
+            name="Power",
+            protocol=candidate["protocol"],
+            address=candidate["address"],
+            command=candidate["command"],
+            raw_data=candidate["raw_data"],
+        ))
+
+        session.phase = WizardPhase.MAP_BUTTONS
+        self._load_button_candidates(session)
+
+    def _resolve_candidates_imprecise(self, session: WizardSession) -> None:
+        """Fallback: resolve with ALL candidates (imprecise, same as old behavior)."""
+        all_device_ids = []
+        all_brands = set()
+        for candidate in session.power_candidates:
+            all_device_ids.extend(candidate["device_ids"])
+            all_brands.update(candidate["brands"])
+
+        session.matched_device_ids = list(set(all_device_ids))
+        session.matched_brand = sorted(all_brands)[0] if all_brands else ""
+
+        first = session.power_candidates[0]
+        session.confirmed_buttons.append(ConfirmedButton(
+            name="Power",
+            protocol=first["protocol"],
+            address=first["address"],
+            command=first["command"],
+            raw_data=first["raw_data"],
+        ))
+
+        session.phase = WizardPhase.MAP_BUTTONS
+        self._load_button_candidates(session)
+
+    def start_narrowing(self, session_id: str) -> WizardSession:
+        """Begin binary search narrowing over power candidates."""
+        session = self.sessions[session_id]
+        session.narrowing_pool = list(range(len(session.power_candidates)))
+        session.narrowing_round = 1
+        session.phase = WizardPhase.NARROWING
+
+        # First test: blast the first half
+        mid = len(session.narrowing_pool) // 2
+        session.narrowing_tested = session.narrowing_pool[:mid]
+        return session
+
+    def narrow_confirm(self, session_id: str, worked: bool) -> WizardSession:
+        """Handle yes/no response during narrowing. Returns updated session."""
+        session = self.sessions[session_id]
+
+        if worked:
+            # The working code is in the tested half
+            session.narrowing_pool = list(session.narrowing_tested)
+        else:
+            # The working code is in the untested half
+            tested_set = set(session.narrowing_tested)
+            session.narrowing_pool = [i for i in session.narrowing_pool if i not in tested_set]
+
+        if len(session.narrowing_pool) == 0:
+            # Edge case: user said no to everything — fall back to imprecise
+            self._resolve_candidates_imprecise(session)
+            return session
+
+        if len(session.narrowing_pool) == 1:
+            # Found it!
+            candidate = session.power_candidates[session.narrowing_pool[0]]
+            self._resolve_candidate(session, candidate)
+            return session
+
+        # Still narrowing — prepare next round
+        session.narrowing_round += 1
+        mid = len(session.narrowing_pool) // 2
+        session.narrowing_tested = session.narrowing_pool[:mid]
         return session
 
     def _load_button_candidates(self, session: WizardSession) -> None:

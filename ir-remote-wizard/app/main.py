@@ -340,7 +340,14 @@ async def bulk_confirm(
     did_work = worked == "yes"
     session = engine.confirm_bulk_blast(session_id, did_work)
 
-    if session.phase == WizardPhase.MAP_BUTTONS:
+    if session.phase == WizardPhase.NARROWING:
+        # Blast the first test subset and show narrowing UI
+        await _blast_candidates(session, session.narrowing_tested)
+        return _render(request, "narrow.html", {
+            "session_id": session_id,
+            "session": session,
+        })
+    elif session.phase == WizardPhase.MAP_BUTTONS:
         return _render(request, "button_picker.html",
                        _button_picker_context(session, session_id))
     elif session.phase == WizardPhase.RESULTS:
@@ -348,6 +355,57 @@ async def bulk_confirm(
                        _results_context(session, session_id))
 
     return RedirectResponse(_url(request, "/"))
+
+
+@app.post("/narrow-confirm", response_class=HTMLResponse)
+async def narrow_confirm(
+    request: Request,
+    session_id: str = Form(...),
+    worked: str = Form(...),
+):
+    """Handle yes/no during binary search narrowing."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    did_work = worked == "yes"
+    session = engine.narrow_confirm(session_id, did_work)
+
+    if session.phase == WizardPhase.NARROWING:
+        # Still narrowing — blast the next test subset
+        await _blast_candidates(session, session.narrowing_tested)
+        return _render(request, "narrow.html", {
+            "session_id": session_id,
+            "session": session,
+        })
+    elif session.phase == WizardPhase.MAP_BUTTONS:
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id))
+    elif session.phase == WizardPhase.RESULTS:
+        return _render(request, "results.html",
+                       _results_context(session, session_id))
+
+    return RedirectResponse(_url(request, "/"))
+
+
+async def _blast_candidates(session: WizardSession, indices: list[int]) -> None:
+    """Send a subset of power candidates via IR."""
+    if not ir_client:
+        return
+    try:
+        await ir_client.connect()
+        for idx in indices:
+            candidate = session.power_candidates[idx]
+            await ir_client.send_ir_code(
+                candidate["protocol"],
+                candidate.get("address"),
+                candidate.get("command"),
+                candidate.get("raw_data"),
+            )
+            await asyncio.sleep(0.8)
+        await ir_client.disconnect()
+    except Exception as e:
+        logger.error("Narrowing blast failed: %s", e)
 
 
 @app.post("/confirm", response_class=HTMLResponse)

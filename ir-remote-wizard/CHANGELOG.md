@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.0
+- **Binary Search Narrowing**: After Bulk Blast confirms a working code, a binary search pinpoints the exact code in ~log2(N) rounds instead of taking the union of all candidates. Results in a far more precise button picker with fewer irrelevant buttons.
+- **UI Refresh**: Aurora background with animated gradient blobs, shimmer-on-hover glass cards, redesigned progress bar with connectors, monospace code font (Fira Code), custom scrollbar styling, and overall polish pass across all pages.
+
 ## 0.5.1
 - **Delete Saved Devices**: Devices on the home page can be deleted via the × button (with confirmation prompt).
 - **Remove Saved Buttons**: Saved buttons in the button picker can now be removed by clicking them. Chips show an × and turn red on hover.

@@ -15,8 +15,10 @@
 {% block content %}
 <div class="glass-card">
     {% if session.confirmed_buttons %}
-    <h2 style="font-size: 24px; margin-bottom: 8px;">Success!</h2>
-    <p class="subtitle" style="margin-bottom: 32px;">We've generated Home Assistant scripts for your {{
+    <div class="celebration-header">
+        <h2>Success!</h2>
+    </div>
+    <p class="subtitle" style="text-align: center; margin-bottom: 32px;">We've generated Home Assistant scripts for your {{
         session.device_type or 'device' }}. No ESP32 reflashing needed!</p>
 
     <!-- HA Scripts (primary output) -->
@@ -25,19 +27,19 @@
             <label
                 style="color: var(--text-secondary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">Home
                 Assistant Scripts</label>
-            <button id="copy-scripts" class="btn btn-secondary btn-small" onclick="copyToClipboard('ha-scripts-code', this)">Copy Code</button>
+            <button id="copy-scripts" class="btn btn-secondary btn-small" onclick="copyToClipboard('ha-scripts-code', this)">📋 Copy Code</button>
         </div>
         <div class="yaml-preview">
             <pre
-                style="margin: 0;"><code id="ha-scripts-code" style="font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.5;">{{ ha_scripts }}</code></pre>
+                style="margin: 0;"><code id="ha-scripts-code" style="font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.6;">{{ ha_scripts }}</code></pre>
         </div>
     </div>
 
     <div style="margin-top: 40px; padding-top: 32px; border-top: 1px solid var(--glass-border);">
         <h3 style="font-size: 18px; margin-bottom: 12px;">Next Steps</h3>
-        <ol style="color: var(--text-secondary); padding-left: 20px; line-height: 2;">
+        <ol style="color: var(--text-secondary); padding-left: 20px; line-height: 2.2;">
             <li>Click <strong>"Save to Home Assistant"</strong> below (or paste the YAML into your <code>scripts.yaml</code>).</li>
-            <li>In Home Assistant, go to <strong>Settings &rarr; Automations & Scenes &rarr; Scripts &rarr; &#8942; &rarr; Reload</strong>.</li>
+            <li>In Home Assistant, go to <strong>Settings &rarr; Automations &amp; Scenes &rarr; Scripts &rarr; &#8942; &rarr; Reload</strong>.</li>
             <li>Your new scripts appear instantly &mdash; no ESP32 reflashing needed!</li>
         </ol>
     </div>
@@ -45,7 +47,7 @@
     <div class="action-buttons" style="margin-top: 40px; display: flex; gap: 16px;">
         <form method="post" action="{{ url('/save-yaml') }}" style="flex: 1;">
             <input type="hidden" name="session_id" value="{{ session_id }}">
-            <button type="submit" class="btn btn-primary btn-wide btn-large">Save to Home Assistant</button>
+            <button type="submit" class="btn btn-primary btn-wide btn-large">💾 Save to Home Assistant</button>
         </form>
         <a href="{{ url('/') }}" class="btn btn-secondary btn-wide btn-large">Start Over</a>
     </div>
@@ -68,20 +70,20 @@
     {% if ha_dashboard %}
     <div class="glass-card"
         style="margin-top: 32px; background: rgba(99, 102, 241, 0.05); border-color: rgba(99, 102, 241, 0.2); padding: 24px;">
-        <h3 style="font-size: 18px; margin-bottom: 16px; color: var(--primary);">Home Assistant Dashboard Card</h3>
+        <h3 style="font-size: 18px; margin-bottom: 16px; color: var(--primary);">🖥️ Home Assistant Dashboard Card</h3>
         <p class="subtitle" style="font-size: 14px; margin-bottom: 20px;">Use this snippet in a <strong>Manual
                 Card</strong> for quick control:</p>
         <div class="yaml-preview" style="background: rgba(0,0,0,0.3);">
             <pre><code id="ha-dashboard-code" style="font-size: 12px; color: #a5b4fc;">{{ ha_dashboard }}</code></pre>
         </div>
-        <button class="btn btn-secondary btn-small" style="margin-top: 12px;" onclick="copyToClipboard('ha-dashboard-code', this)">Copy Dashboard Card</button>
+        <button class="btn btn-secondary btn-small" style="margin-top: 12px;" onclick="copyToClipboard('ha-dashboard-code', this)">📋 Copy Dashboard Card</button>
     </div>
     {% endif %}
 
     <!-- ESPHome YAML (collapsible, for advanced users) -->
     <details style="margin-top: 32px;">
         <summary style="cursor: pointer; color: var(--text-secondary); font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; padding: 12px 0;">
-            Advanced: ESPHome Button YAML
+            ⚙️ Advanced: ESPHome Button YAML
         </summary>
         <p class="subtitle" style="font-size: 13px; margin: 8px 0 16px;">
             Only needed if you want to bake buttons directly into the ESP32 firmware (requires recompile + OTA flash).
@@ -89,7 +91,7 @@
         <div class="yaml-preview">
             <pre style="margin: 0;"><code id="esphome-yaml-code" style="font-family: 'Fira Code', monospace; font-size: 13px; line-height: 1.5;">{{ yaml_content }}</code></pre>
         </div>
-        <button class="btn btn-secondary btn-small" style="margin-top: 12px;" onclick="copyToClipboard('esphome-yaml-code', this)">Copy ESPHome YAML</button>
+        <button class="btn btn-secondary btn-small" style="margin-top: 12px;" onclick="copyToClipboard('esphome-yaml-code', this)">📋 Copy ESPHome YAML</button>
     </details>
 
     {% else %}
@@ -109,7 +111,7 @@ function copyToClipboard(elementId, btn) {
 
     function onSuccess() {
         const original = btn.textContent;
-        btn.textContent = 'Copied!';
+        btn.textContent = '✅ Copied!';
         setTimeout(() => { btn.textContent = original; }, 2000);
     }
 

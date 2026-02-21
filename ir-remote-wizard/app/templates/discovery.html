@@ -63,13 +63,13 @@
         <form method="post" action="{{ url('/send-test') }}" class="btn-wide">
             <input type="hidden" name="session_id" value="{{ session_id }}">
             <button type="submit" class="btn btn-primary btn-large btn-wide">
-                {% if sent is defined and sent %}Send Again{% else %}Send Signal{% endif %}
+                {% if sent is defined and sent %}⟳ Send Again{% else %}📡 Send Signal{% endif %}
             </button>
         </form>
 
         {% if phase == "identify" and session.identify_progress[1] > 1 %}
         <button id="bulk-blast-btn" class="btn btn-secondary btn-wide" data-url="{{ url('/bulk-blast') }}" onclick="startBulkBlast('{{ session_id }}')">
-            Bulk Blast (Try All)
+            🚀 Bulk Blast (Try All)
         </button>
         <p id="bulk-status" class="hint" style="text-align: center; opacity: 0.7;"></p>
         {% endif %}
@@ -78,17 +78,17 @@
     {% if sent is defined and sent %}
     <div class="confirm-section"
         style="margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--glass-border); animation: fadeInUp 0.4s ease-out;">
-        <p style="font-weight: 500; margin-bottom: 16px;">Did the device respond?</p>
+        <p style="font-weight: 500; margin-bottom: 16px;">👆 Did the device respond?</p>
         <div class="confirm-buttons">
             <form method="post" action="{{ url('/confirm') }}" class="inline-form" style="flex: 1;">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
                 <input type="hidden" name="worked" value="yes">
-                <button type="submit" class="btn btn-success btn-wide">Yes, It Worked!</button>
+                <button type="submit" class="btn btn-success btn-wide">✓ Yes, It Worked!</button>
             </form>
             <form method="post" action="{{ url('/confirm') }}" class="inline-form" style="flex: 1;">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
                 <input type="hidden" name="worked" value="no">
-                <button type="submit" class="btn btn-danger btn-wide">No Response</button>
+                <button type="submit" class="btn btn-danger btn-wide">✗ No Response</button>
             </form>
         </div>
     </div>
@@ -97,17 +97,17 @@
     {% if phase == "identify" and session.identify_progress[1] > 1 %}
     <div id="bulk-confirm-section" class="confirm-section"
         style="display: none; margin-top: 32px; padding-top: 32px; border-top: 1px solid var(--glass-border);">
-        <p style="font-weight: 500; margin-bottom: 16px;">Did the device respond to any code?</p>
+        <p style="font-weight: 500; margin-bottom: 16px;">👆 Did the device respond to any code?</p>
         <div class="confirm-buttons">
             <form method="post" action="{{ url('/bulk-confirm') }}" class="inline-form" style="flex: 1;">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
                 <input type="hidden" name="worked" value="yes">
-                <button type="submit" class="btn btn-success btn-wide">Yes, It Worked!</button>
+                <button type="submit" class="btn btn-success btn-wide">✓ Yes, It Worked!</button>
             </form>
             <form method="post" action="{{ url('/bulk-confirm') }}" class="inline-form" style="flex: 1;">
                 <input type="hidden" name="session_id" value="{{ session_id }}">
                 <input type="hidden" name="worked" value="no">
-                <button type="submit" class="btn btn-danger btn-wide">No Response</button>
+                <button type="submit" class="btn btn-danger btn-wide">✗ No Response</button>
             </form>
         </div>
     </div>

@@ -1,40 +1,47 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>IR Remote Wizard</title>
-    <link rel="stylesheet" href="{{ url('/static/style.css?v=0.5.1') }}">
-</head>
+    <link rel="stylesheet" href="{{ url('/static/style.css?v=0.6.0') }}" />
+  </head>
 
-<body>
+  <body>
+    <canvas id="particle-canvas"></canvas>
+
     <div class="container">
-        <header>
-            <h1>IR Remote Wizard</h1>
-            {% block subtitle %}<p class="subtitle">Auto-discover IR codes for your devices</p>{% endblock %}
-        </header>
+      <header>
+        <h1>IR Remote Wizard</h1>
+        {% block subtitle %}
+        <p class="subtitle">Auto-discover IR codes for your devices</p>
+        {% endblock %}
+      </header>
 
-        {% block progress %}{% endblock %}
+      {% block progress %}{% endblock %}
 
-        <main id="main-content">
-            {% if error is defined and error %}
-            <div class="alert alert-error">
-                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd"
-                        d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                        clip-rule="evenodd"></path>
-                </svg>
-                {{ error }}
-            </div>
-            {% endif %}
-
-            {% block content %}{% endblock %}
-        </main>
+      <main id="main-content">
+        {% if error is defined and error %}
+        <div class="alert alert-error">
+          <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fill-rule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+          {{ error }}
+        </div>
+        {% endif %} {% block content %}{% endblock %}
+      </main>
     </div>
 
-    <script src="{{ url('/static/wizard.js?v=0.5.1') }}"></script>
-    {% block scripts %}{% endblock %}
-</body>
+    <footer class="site-footer">
+      IR Remote Wizard ·
+      <a href="https://github.com">ESPHome + Home Assistant</a>
+    </footer>
 
+    <script src="{{ url('/static/wizard.js?v=0.6.0') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
 </html>

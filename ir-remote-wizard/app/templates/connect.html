@@ -15,8 +15,10 @@
 {% endif %}
 
 <div class="glass-card">
-    <h2 style="font-size: 24px; margin-bottom: 8px;">Connect to ESPHome</h2>
-    <p class="subtitle" style="margin-bottom: 32px;">Enter your ESP32 IR Blaster details to begin.</p>
+    <div class="connection-status">
+        <h2 style="font-size: 24px; margin-bottom: 0;">Connect to ESPHome</h2>
+    </div>
+    <p class="subtitle" style="margin-top: 8px; margin-bottom: 32px;">Enter your ESP32 IR Blaster details to begin.</p>
 
     <form method="post" action="{{ url('/connect') }}">
         <input type="hidden" name="session_id" value="{{ session_id }}">
@@ -36,13 +38,12 @@
             <label for="api_key">API Encryption Key</label>
             <input type="password" id="api_key" name="api_key" value="{{ config.api_encryption_key }}"
                 placeholder="Base64 encryption key from your ESPHome config">
-            <span class="hint"
-                style="color: var(--text-secondary); font-size: 12px; margin-top: 8px; display: block;">Leave empty if
+            <span style="color: var(--text-secondary); font-size: 12px; margin-top: 8px; display: block; opacity: 0.7;">Leave empty if
                 no encryption is configured</span>
         </div>
 
         <button type="submit" class="btn btn-primary btn-wide btn-large">
-            Connect & Self-Check
+            Connect &amp; Self-Check
         </button>
     </form>
 </div>

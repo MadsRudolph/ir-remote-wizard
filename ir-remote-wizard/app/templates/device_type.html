@@ -16,7 +16,9 @@
 <div class="glass-card" style="margin-bottom: 32px;">
     <div style="display: flex; justify-content: space-between; align-items: flex-start;">
         <div>
-            <h2 style="font-size: 20px; margin-bottom: 4px;">Connected to {{ device_info.name }}</h2>
+            <div class="connection-status">
+                <h2 style="font-size: 20px; margin-bottom: 4px;">Connected to {{ device_info.name }}</h2>
+            </div>
             <p class="subtitle" style="font-size: 14px;">{{ device_info.model }} — ESPHome {{
                 device_info.esphome_version }}</p>
         </div>
@@ -35,7 +37,7 @@
                     d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
                     clip-rule="evenodd"></path>
             </svg>
-            IR Transmitter & Receiver verified.
+            IR Transmitter &amp; Receiver verified.
         </div>
         {% else %}
         <div class="alert alert-error" style="margin-bottom: 0;">

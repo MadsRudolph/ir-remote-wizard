@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block subtitle %}
+<p class="subtitle">Narrowing down the working code</p>
+{% endblock %}
+
+{% block progress %}
+<div class="progress-bar">
+    <div class="step done">1. Connect</div>
+    <div class="step done">2. Device</div>
+    <div class="step done">3. Brand</div>
+    <div class="step active">4. Discover</div>
+    <div class="step">5. Results</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="glass-card">
+    <div class="discovery-info">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <h2 style="font-size: 24px;">Binary Search</h2>
+            <span class="badge">Round {{ session.narrowing_round }} of ~{{ session.narrowing_total_rounds }}</span>
+        </div>
+
+        <p style="margin-bottom: 16px; color: var(--text-secondary);">
+            {{ session.narrowing_pool | length }} candidates remaining &mdash;
+            testing {{ session.narrowing_tested | length }} now.
+        </p>
+
+        <div class="pulse-container pulse-active">
+            <div class="pulse-wave"></div>
+        </div>
+    </div>
+
+    <p style="text-align: center; margin: 24px 0; color: var(--text-secondary);">
+        A subset of codes was just sent. Did your device respond?
+    </p>
+
+    <div class="confirm-buttons">
+        <form method="post" action="{{ url('/narrow-confirm') }}" class="inline-form" style="flex: 1;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="worked" value="yes">
+            <button type="submit" class="btn btn-success btn-wide">Yes, It Responded</button>
+        </form>
+        <form method="post" action="{{ url('/narrow-confirm') }}" class="inline-form" style="flex: 1;">
+            <input type="hidden" name="session_id" value="{{ session_id }}">
+            <input type="hidden" name="worked" value="no">
+            <button type="submit" class="btn btn-danger btn-wide">No Response</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
