@@ -4,9 +4,11 @@ The IR Remote Wizard is a Home Assistant add-on that discovers, tests, and gener
 
 ## Quick Start
 
-### 1. Flash the ESP32 (one-time)
+### 1. Build & Flash the ESP32 (one-time)
 
-Flash your ESP32 with `esphome/ir-blaster-discovery.yaml`. This universal firmware exposes API services for every supported IR protocol — you never need to reflash it again.
+First, build the IR blaster hardware. See **[BUILD_GUIDE.md](BUILD_GUIDE.md)** for the full schematic, bill of materials, and wiring instructions.
+
+Then flash your ESP32 with `esphome/ir-blaster-discovery.yaml`. This universal firmware exposes API services for every supported IR protocol — you never need to reflash it again.
 
 Copy the file to your ESPHome config directory, add your WiFi credentials and API key to `secrets.yaml`, then flash via USB or OTA from the ESPHome dashboard.
 

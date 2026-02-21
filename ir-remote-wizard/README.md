@@ -32,7 +32,8 @@ Discover, learn, and control any IR device from Home Assistant — no reflashing
 
 ## Documentation
 
-See **[DOCS.md](DOCS.md)** for detailed setup instructions, ESPHome configuration, and troubleshooting.
+- **[BUILD_GUIDE.md](BUILD_GUIDE.md)** — How to build the ESP32 IR blaster hardware (schematic, BOM, wiring)
+- **[DOCS.md](DOCS.md)** — Setup instructions, ESPHome configuration, and troubleshooting
 
 ---
 *Created by Mads Rudolph*
