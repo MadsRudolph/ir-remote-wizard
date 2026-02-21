@@ -732,6 +732,33 @@ async def learn_save(
     })
 
 
+@app.post("/learn/test-saved", response_class=HTMLResponse)
+async def learn_test_saved(
+    request: Request,
+    session_id: str = Form(...),
+    button_index: int = Form(...),
+):
+    """Send a saved button's IR code for testing."""
+    session = engine.get_session(session_id)
+    if not session:
+        return RedirectResponse(_url(request, "/"))
+
+    if 0 <= button_index < len(session.confirmed_buttons) and ir_client:
+        btn = session.confirmed_buttons[button_index]
+        await ir_client.send_ir_code(
+            btn.protocol,
+            btn.address,
+            btn.command,
+            btn.raw_data,
+        )
+
+    return _render(request, "learn.html", {
+        "session_id": session_id,
+        "session": session,
+        "tested_saved_index": button_index,
+    })
+
+
 @app.post("/learn/delete", response_class=HTMLResponse)
 async def learn_delete(
     request: Request,

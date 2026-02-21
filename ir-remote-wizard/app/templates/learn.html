@@ -132,12 +132,21 @@
                 <span style="font-weight: 600; font-size: 15px;">{{ btn.name }}</span>
                 <span class="badge" style="margin-left: 8px; opacity: 0.7;">{{ btn.protocol }}</span>
             </div>
-            <form method="post" action="{{ url('/learn/delete') }}" class="inline-form">
-                <input type="hidden" name="session_id" value="{{ session_id }}">
-                <input type="hidden" name="button_index" value="{{ loop.index0 }}">
-                <button type="submit" class="btn btn-danger btn-small"
-                    style="background: transparent; color: var(--danger); padding: 4px; border: 1px solid rgba(239,68,68,0.2);">✕</button>
-            </form>
+            <div style="display: flex; gap: 8px; align-items: center;">
+                <form method="post" action="{{ url('/learn/test-saved') }}" class="inline-form">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+                    <input type="hidden" name="button_index" value="{{ loop.index0 }}">
+                    <button type="submit" class="btn btn-small"
+                        style="background: transparent; color: var(--primary); padding: 4px 8px; border: 1px solid rgba(99,102,241,0.3);"
+                        >{% if tested_saved_index is defined and tested_saved_index == loop.index0 %}Sent!{% else %}Test{% endif %}</button>
+                </form>
+                <form method="post" action="{{ url('/learn/delete') }}" class="inline-form">
+                    <input type="hidden" name="session_id" value="{{ session_id }}">
+                    <input type="hidden" name="button_index" value="{{ loop.index0 }}">
+                    <button type="submit" class="btn btn-danger btn-small"
+                        style="background: transparent; color: var(--danger); padding: 4px; border: 1px solid rgba(239,68,68,0.2);">✕</button>
+                </form>
+            </div>
         </div>
         {% endfor %}
     </div>
