@@ -2,11 +2,14 @@
 
 from __future__ import annotations
 
+import time
 from dataclasses import dataclass, field
 from enum import Enum
 
 from .database import IRDatabase
 from .protocol_map import BUTTON_CATEGORIES
+
+SESSION_TTL = 2 * 60 * 60  # 2 hours
 
 
 class WizardPhase(str, Enum):
@@ -36,6 +39,7 @@ class WizardSession:
     brand: str | None = None
     device_name: str = ""
     edit_device_id: str = ""
+    created_at: float = field(default_factory=time.time)
 
     # Phase 1 (Identify) state
     power_candidates: list[dict] = field(default_factory=list)
@@ -77,12 +81,23 @@ class DiscoveryEngine:
         self.sessions: dict[str, WizardSession] = {}
 
     def create_session(self, session_id: str) -> WizardSession:
+        self._evict_stale()
         session = WizardSession()
         self.sessions[session_id] = session
         return session
 
     def get_session(self, session_id: str) -> WizardSession | None:
-        return self.sessions.get(session_id)
+        session = self.sessions.get(session_id)
+        if session and time.time() - session.created_at > SESSION_TTL:
+            del self.sessions[session_id]
+            return None
+        return session
+
+    def _evict_stale(self) -> None:
+        now = time.time()
+        stale = [sid for sid, s in self.sessions.items() if now - s.created_at > SESSION_TTL]
+        for sid in stale:
+            del self.sessions[sid]
 
     def set_device_type(self, session_id: str, device_type: str) -> WizardSession:
         session = self.sessions[session_id]

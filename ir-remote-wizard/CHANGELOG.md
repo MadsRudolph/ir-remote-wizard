@@ -5,7 +5,9 @@
 - **Home Page**: New landing page shows all saved devices with button counts. Click "Edit" to resume, or "Configure New Device" to start fresh.
 - **Edit Flow**: Editing a saved device restores the session and skips straight to the button picker after connecting to the ESP32. Existing buttons show as green, and you can add more.
 - **Remove Saved Buttons**: Saved buttons in the button picker can now be removed by clicking them. Chips show an × and turn red on hover.
+- **Delete Saved Devices**: Devices on the home page can be deleted via the × button (with confirmation prompt).
 - **Script Updates**: When saving scripts for an edited device, old script entries are replaced instead of being duplicated.
+- **Session Cleanup**: Wizard sessions now expire after 2 hours to prevent memory leaks on long-running instances.
 
 ## 0.4.0
 - **Button Picker UI**: Replaced the sequential one-by-one button testing with an interactive picker. All available buttons are shown grouped by category as clickable chips. Tap to test, then save the ones that work. Already-saved buttons are highlighted green.

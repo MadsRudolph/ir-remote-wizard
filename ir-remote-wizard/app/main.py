@@ -98,6 +98,13 @@ async def new_device(request: Request):
     })
 
 
+@app.post("/delete/{device_id}", response_class=HTMLResponse)
+async def delete_device(request: Request, device_id: str):
+    device_store.delete_device(device_id)
+    devices = device_store.list_devices()
+    return _render(request, "home.html", {"devices": devices})
+
+
 @app.get("/edit/{device_id}", response_class=HTMLResponse)
 async def edit_device(request: Request, device_id: str):
     profile = device_store.get_device(device_id)

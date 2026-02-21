@@ -8,17 +8,27 @@
 
     <div style="display: flex; flex-direction: column; gap: 12px;">
         {% for dev in devices %}
-        <a href="{{ url('/edit/' + dev.device_id) }}"
-            style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px; text-decoration: none; color: inherit; transition: border-color 0.2s;"
-            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--glass-border)'">
-            <div>
-                <span style="font-weight: 600; font-size: 16px;">{{ dev.brand }} {{ dev.device_type }}</span>
-                <span style="color: var(--text-secondary); font-size: 13px; margin-left: 12px;">
-                    {{ dev.buttons | length }} button{{ 's' if dev.buttons | length != 1 else '' }}
-                </span>
-            </div>
-            <span style="color: var(--primary); font-size: 14px; font-weight: 500;">Edit &rarr;</span>
-        </a>
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <a href="{{ url('/edit/' + dev.device_id) }}"
+                style="flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px; text-decoration: none; color: inherit; transition: border-color 0.2s;"
+                onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+                <div>
+                    <span style="font-weight: 600; font-size: 16px;">{{ dev.brand }} {{ dev.device_type }}</span>
+                    <span style="color: var(--text-secondary); font-size: 13px; margin-left: 12px;">
+                        {{ dev.buttons | length }} button{{ 's' if dev.buttons | length != 1 else '' }}
+                    </span>
+                </div>
+                <span style="color: var(--primary); font-size: 14px; font-weight: 500;">Edit &rarr;</span>
+            </a>
+            <form method="post" action="{{ url('/delete/' + dev.device_id) }}" style="margin: 0;"
+                onsubmit="return confirm('Delete {{ dev.brand }} {{ dev.device_type }}?')">
+                <button type="submit" title="Delete {{ dev.brand }} {{ dev.device_type }}"
+                    style="width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.04); color: var(--text-secondary); cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s, color 0.2s, background 0.2s;"
+                    onmouseover="this.style.borderColor='var(--error)'; this.style.color='var(--error)'; this.style.background='rgba(239,68,68,0.1)'"
+                    onmouseout="this.style.borderColor='var(--glass-border)'; this.style.color='var(--text-secondary)'; this.style.background='rgba(255,255,255,0.04)'"
+                >&times;</button>
+            </form>
+        </div>
         {% endfor %}
     </div>
 </div>
