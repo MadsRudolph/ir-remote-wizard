@@ -1,6 +1,19 @@
 {% extends "base.html" %}
 
 {% block content %}
+{% if editing is defined and editing %}
+<div class="alert alert-success" style="margin-bottom: 24px;">
+    <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd"></path>
+    </svg>
+    Resuming: <strong>{{ editing.brand }} {{ editing.device_type }}</strong>
+    ({{ editing.buttons | length }} button{{ 's' if editing.buttons | length != 1 else '' }} saved).
+    Connect to your ESP32 to continue.
+</div>
+{% endif %}
+
 <div class="glass-card">
     <h2 style="font-size: 24px; margin-bottom: 8px;">Connect to ESPHome</h2>
     <p class="subtitle" style="margin-bottom: 32px;">Enter your ESP32 IR Blaster details to begin.</p>

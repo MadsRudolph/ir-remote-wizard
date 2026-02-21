@@ -35,6 +35,7 @@ class WizardSession:
     device_type: str = ""
     brand: str | None = None
     device_name: str = ""
+    edit_device_id: str = ""
 
     # Phase 1 (Identify) state
     power_candidates: list[dict] = field(default_factory=list)

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+
+{% block content %}
+{% if devices %}
+<div class="glass-card">
+    <h2 style="font-size: 24px; margin-bottom: 8px;">Saved Devices</h2>
+    <p class="subtitle" style="margin-bottom: 24px;">Pick up where you left off, or configure something new.</p>
+
+    <div style="display: flex; flex-direction: column; gap: 12px;">
+        {% for dev in devices %}
+        <a href="{{ url('/edit/' + dev.device_id) }}"
+            style="display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: rgba(255,255,255,0.04); border: 1px solid var(--glass-border); border-radius: 12px; text-decoration: none; color: inherit; transition: border-color 0.2s;"
+            onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor='var(--glass-border)'">
+            <div>
+                <span style="font-weight: 600; font-size: 16px;">{{ dev.brand }} {{ dev.device_type }}</span>
+                <span style="color: var(--text-secondary); font-size: 13px; margin-left: 12px;">
+                    {{ dev.buttons | length }} button{{ 's' if dev.buttons | length != 1 else '' }}
+                </span>
+            </div>
+            <span style="color: var(--primary); font-size: 14px; font-weight: 500;">Edit &rarr;</span>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div style="margin-top: 32px; text-align: center;">
+    <a href="{{ url('/new') }}" class="btn btn-primary btn-large btn-wide">Configure New Device</a>
+</div>
+{% endblock %}

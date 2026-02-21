@@ -261,10 +261,10 @@ def save_ha_scripts(
         dupes = new_ids & existing_ids
 
         if dupes:
-            # Remove duplicate blocks from new content
+            # Remove OLD entries from the existing file so the new ones replace them
             filtered_lines: list[str] = []
             skip = False
-            for line in scripts_yaml.splitlines():
+            for line in existing.splitlines():
                 id_match = re.match(r"^(ir_\w+):", line)
                 if id_match:
                     skip = id_match.group(1) in dupes
@@ -272,13 +272,15 @@ def save_ha_scripts(
                     filtered_lines.append(line)
                 elif line == "":
                     skip = False  # reset on blank line boundary
-            scripts_yaml = "\n".join(filtered_lines)
+            existing = "\n".join(filtered_lines)
 
-        # Don't write if nothing left after dedup
-        if not re.search(r"^ir_\w+:", scripts_yaml, re.MULTILINE):
-            return {"path": scripts_path, "merged": True, "skipped_all": True}
+        # Strip trailing blank lines from existing before appending
+        base = existing.rstrip()
+        if base:
+            new_content = base + "\n\n" + scripts_yaml.strip() + "\n"
+        else:
+            new_content = scripts_yaml.strip() + "\n"
 
-        new_content = existing.rstrip() + "\n\n" + scripts_yaml.strip() + "\n"
         with open(scripts_path, "w") as f:
             f.write(new_content)
         return {"path": scripts_path, "merged": True}

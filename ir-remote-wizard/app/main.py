@@ -14,6 +14,7 @@ from fastapi.templating import Jinja2Templates
 
 from .config import Config
 from .database import IRDatabase
+from .device_store import DeviceStore, DeviceProfile, SavedButton, make_device_id
 from .discovery import ConfirmedButton, DiscoveryEngine, WizardPhase, WizardSession
 from .esphome_client import ESPHomeIRClient
 from .ha_script_generator import generate_ha_scripts, generate_ha_dashboard_card, save_ha_scripts
@@ -34,15 +35,17 @@ app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), na
 config: Config = None
 db: IRDatabase = None
 engine: DiscoveryEngine = None
+device_store: DeviceStore = None
 ir_client: ESPHomeIRClient | None = None
 
 
 @app.on_event("startup")
 async def startup():
-    global config, db, engine
+    global config, db, engine, device_store
     config = Config.load()
     db = IRDatabase(config.db_path)
     engine = DiscoveryEngine(db)
+    device_store = DeviceStore(config.ha_config_dir)
     logger.info("IR Remote Wizard started. DB: %s", config.db_path)
 
     stats = db.get_stats()
@@ -81,11 +84,52 @@ def _results_context(session: WizardSession, session_id: str, **extra) -> dict:
 
 @app.get("/", response_class=HTMLResponse)
 async def index(request: Request):
+    devices = device_store.list_devices()
+    return _render(request, "home.html", {"devices": devices})
+
+
+@app.get("/new", response_class=HTMLResponse)
+async def new_device(request: Request):
     session_id = str(uuid.uuid4())
-    session = engine.create_session(session_id)
+    engine.create_session(session_id)
     return _render(request, "connect.html", {
         "session_id": session_id,
         "config": config,
+    })
+
+
+@app.get("/edit/{device_id}", response_class=HTMLResponse)
+async def edit_device(request: Request, device_id: str):
+    profile = device_store.get_device(device_id)
+    if not profile:
+        return RedirectResponse(_url(request, "/"))
+
+    session_id = str(uuid.uuid4())
+    session = engine.create_session(session_id)
+
+    # Restore state from saved profile
+    session.device_type = profile.device_type
+    session.brand = profile.brand
+    session.device_name = profile.device_name
+    session.matched_brand = profile.matched_brand
+    session.matched_device_ids = list(profile.matched_device_ids)
+    session.edit_device_id = device_id
+    session.confirmed_buttons = [
+        ConfirmedButton(
+            name=b.name,
+            protocol=b.protocol,
+            address=b.address,
+            command=b.command,
+            raw_data=b.raw_data,
+        )
+        for b in profile.buttons
+    ]
+    session.phase = WizardPhase.MAP_BUTTONS
+
+    return _render(request, "connect.html", {
+        "session_id": session_id,
+        "config": config,
+        "editing": profile,
     })
 
 
@@ -114,14 +158,19 @@ async def connect(
             "error": f"Connection failed: {result['error']}",
         })
 
-    # Connection successful — move to device type selection
-    device_types = db.get_device_type_counts()
-    
-    # Store device name in session for smart file targeting
+    # Connection successful
     session = engine.get_session(session_id)
     if session:
         session.device_name = result.get("name", "ir-blaster")
-        
+
+    # Edit flow: skip device type/brand selection, go straight to button picker
+    if session and session.phase == WizardPhase.MAP_BUTTONS and session.matched_device_ids:
+        engine._load_button_candidates(session)
+        return _render(request, "button_picker.html",
+                       _button_picker_context(session, session_id))
+
+    # Normal flow: move to device type selection
+    device_types = db.get_device_type_counts()
     return _render(request, "device_type.html", {
         "session_id": session_id,
         "device_types": device_types,
@@ -435,6 +484,30 @@ async def save_yaml_route(
 
     result = save_ha_scripts(scripts_yaml, config.ha_config_dir)
     logger.info("save-yaml: result=%s", result)
+
+    # Persist device profile
+    if session.confirmed_buttons:
+        brand = session.matched_brand or session.brand or "custom"
+        device_id = session.edit_device_id or make_device_id(brand, session.device_type)
+        profile = DeviceProfile(
+            device_id=device_id,
+            device_type=session.device_type or "Device",
+            brand=brand,
+            device_name=session.device_name,
+            matched_brand=session.matched_brand,
+            matched_device_ids=list(session.matched_device_ids),
+            buttons=[
+                SavedButton(
+                    name=b.name,
+                    protocol=b.protocol,
+                    address=b.address,
+                    command=b.command,
+                    raw_data=b.raw_data,
+                )
+                for b in session.confirmed_buttons
+            ],
+        )
+        device_store.save_device(profile)
 
     return _render(request, "results.html",
                    _results_context(session, session_id,
